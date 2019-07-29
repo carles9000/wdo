@@ -9,6 +9,8 @@
 
 CLASS RDBMS	
 
+	DATA  cType
+	
 	DATA  cRdbms
 	DATA  cServer
 	DATA  cUsername
@@ -16,6 +18,11 @@ CLASS RDBMS
 	DATA  cPassword
 	DATA  nPort
 	DATA  hConnection 
+	
+	
+	DATA  cRdd		
+	DATA  cDbf		
+	DATA  cCdx		
 
 	METHOD New() 						CONSTRUCTOR
 	METHOD Connect() 					VIRTUAL				
@@ -26,6 +33,6 @@ ENDCLASS
 
 METHOD New() CLASS RDBMS
 
-	AP_RPUTS( 'RDBMS New()' )
+	? 'RDBMS New()'
 
 RETU SELF

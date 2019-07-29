@@ -12,8 +12,10 @@ FUNCTION Main()
 
 	? time()
 	
-	//o 	:= WDO_MySql():New()
-	o 	:= WDO():New( 'MYSQL', "localhost", "harbour", "password", "dbHarbour", 3306 )
+	//o 	:= WDO_MySql():New()			
+	
+	
+	o 	:= WDO():Rdd( 'customer.dbf', 'customer.cdx' )
 	
 	o:Connect()	
 	

@@ -9,6 +9,8 @@
 
 CLASS WDO	
 
+	DATA  cType
+	
 	DATA  oDb
 	DATA  cRdbms
 	DATA  cRdbms 		
@@ -16,10 +18,15 @@ CLASS WDO
 	DATA  cUserName	
 	DATA  cPassword 	
 	DATA  cDatabase 	
-	DATA  nPort 		
+	DATA  nPort
+	
+	DATA  cRdd		
+	DATA  cDbf		
+	DATA  cCdx		
 
-
-	METHOD New( cRdbms ) 						CONSTRUCTOR
+	
+	METHOD Rdbms( cRdbms, cServer, cUsername, cPassword, cDatabase, nPort ) 	CONSTRUCTOR
+	METHOD Rdd( cRdbms, cDbf, cCdx )												CONSTRUCTOR
 			
 	
 	METHOD Connect()
@@ -30,14 +37,31 @@ CLASS WDO
 
 ENDCLASS
 
-METHOD New( cRdbms, cServer, cUsername, cPassword, cDatabase, nPort ) CLASS WDO
+METHOD Rdd( cRdd, cDbf, cCdx ) CLASS WDO
 
-	hb_default( @cRdbms , 'DBF' )
+	hb_default( @cRdd , 'DBFCDX' )
+	hb_default( @cDbf, '' )
+	hb_default( @cCdx, '' )
+	
+	::cType 		:= 'DBF'
+	
+	::cRdd 			:= Upper( cRdd )
+	::cDbf			:= cDbf
+	::cCdx			:= cCdx	
+
+RETU Self
+
+
+METHOD Rdbms( cRdbms, cServer, cUsername, cPassword, cDatabase, nPort ) CLASS WDO
+
+	hb_default( @cRdbms , 'MYSQL' )
 	hb_default( @cServer, '' )
 	hb_default( @cUserName, '' )
 	hb_default( @cPassword, '' )
 	hb_default( @cDatabase, '' )
 	hb_default( @nPort, 0 )
+	
+	::cType 		:= 'RDBMS'	
 	
 	::cRdbms 		:= Upper( cRdbms )
 	::cServer		:= cServer
@@ -46,8 +70,9 @@ METHOD New( cRdbms, cServer, cUsername, cPassword, cDatabase, nPort ) CLASS WDO
 	::cDatabase 	:= cDatabase
 	::nPort 		:= nPort
 
-	AP_RPUTS( 'WDO New()' )
-	AP_RPUTS( ::cRdbms )
+	
+	? 'WDO New()', ::cRdbms
+
 
 RETU SELF
 
@@ -55,12 +80,13 @@ RETU SELF
 
 METHOD Connect() CLASS WDO
 
+	? '<hr>Connect ' + ::cRdbms 
+	
 	DO CASE
-		CASE ::cRdbms == 'DBF'		
-		CASE ::cRdbms == 'MYSQL'	; ::oDb := RDBMS_MySql():New( ::cServer, ::cUsername, ::cPassword, ::cDatabase, ::nPort )
+		CASE ::cType == 'DBF'		; ::oDb := RDBMS_Dbf():New( ::cRdd, ::cDbf, ::cCdx )
+		CASE ::cType == 'RDBMS'		; ::oDb := RDBMS_MySql():New( ::cServer, ::cUsername, ::cPassword, ::cDatabase, ::nPort )
 	ENDCASE
 
-	AP_RPUTS( '<hr>Connect ' + ::cRdbms )
 
 RETU NIL
 

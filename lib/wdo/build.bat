@@ -12,7 +12,16 @@ del wdo_lib.hrb
 
 harbour wdo_lib.prg /n /w /gh
 
+if errorlevel 1 goto compileerror
+goto exit
+
+:compileerror
+
+@echo Error Compile
+@echo =============
 
 pause
+
+:exit
 
 
