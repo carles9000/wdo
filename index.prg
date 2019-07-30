@@ -17,10 +17,11 @@ FUNCTION Main()
 	
 		o := RDBMS_Dbf()
 		
-		? o:ClassName()
-		? o:cPath
-		o:cPath := hb_getenv( 'PRGPATH' ) + '/data'
-		? o:cPath
+		//	Parametrizacón para todos los objetos que crearemos
+			o:cPath := hb_getenv( 'PRGPATH' ) + '/data'
+		
+		
+			? 'Version', o:Version()
 		
 	//	Open DBF
 	

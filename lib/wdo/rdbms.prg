@@ -5,8 +5,6 @@
 	Date:......: 26/07/2019
 	--------------------------------------------------------- */
 	
-#define RDBMS_VERSION 		0.1	
-
 CLASS RDBMS	
 
 	DATA  cType
@@ -25,9 +23,7 @@ CLASS RDBMS
 	DATA  cCdx		
 
 	METHOD New() 						CONSTRUCTOR
-	METHOD Connect() 					VIRTUAL				
-	
-	METHOD Version()					INLINE RDBMS_VERSION		
+
 
 ENDCLASS
 
