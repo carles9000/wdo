@@ -6,6 +6,8 @@
 	--------------------------------------------------------- */ 
 	
 #define RDBMS_VERSION  					'0.1a'
+
+#define _SET_AUTOPEN          45
 	
 CLASS RDBMS_Dbf FROM RDBMS
 
@@ -15,7 +17,8 @@ CLASS RDBMS_Dbf FROM RDBMS
 	DATA lExclusive						INIT .F.
 	DATA lRead								INIT .F.
 	DATA lOpen								INIT .F.
-	DATA bExit								INIT {|| AP_RPUTS( '<h3>Exit Event...</h3>' )}
+	DATA bExit								//INIT {|| AP_RPUTS( '<h3>Destructor Class...</h3>' )}
+	
 		
 	CLASSDATA cPath 						INIT hb_getenv( 'PRGPATH' )
 	CLASSDATA cRdd 							INIT 'DBFCDX'
@@ -23,7 +26,7 @@ CLASS RDBMS_Dbf FROM RDBMS
 	
 	METHOD New() 							CONSTRUCTOR
 	
-	//	Standard methods
+	//	Common methods
 
 	METHOD Open()
 	METHOD Close()	
@@ -42,9 +45,9 @@ CLASS RDBMS_Dbf FROM RDBMS
 	METHOD SetError( cError )		
 	METHOD Version()						INLINE RDBMS_VERSION		
 	
-	//	Special methods...
+	//	Particular methods...
 	
-	METHOD OpenDbf( cFile ) 
+    METHOD GoTo( n ) 						INLINE IF ( ::lOpen, (::cAlias)->( DbGoTo( n ) ), NIL )	
     METHOD Recno() 						INLINE IF ( ::lOpen, (::cAlias)->( Recno() ), -1 )	
 	  
 	
@@ -52,18 +55,14 @@ CLASS RDBMS_Dbf FROM RDBMS
 
 ENDCLASS
 
-METHOD New( cDbf, cCdx, lOpen ) CLASS RDBMS_Dbf
+METHOD New( cDbf, cIndex, lOpen ) CLASS RDBMS_Dbf
 
 	hb_default( @cDbf, '' )
-	hb_default( @cCdx, '' )
+	hb_default( @cIndex, '' )
 	hb_default( @lOpen, .T. )
 	
 	::cDbf		:= cDbf
-	::cCdx		:= cCdx
-	
-	
-	//SET AUTOPEN OFF
-	//INDEX ON MiTabla->nombre1 TAG nom1
+	::cIndex	:= cIndex	
 	
 	IF lOpen .AND. !empty( ::cDbf )
 	
@@ -76,99 +75,99 @@ RETU SELF
 
 METHOD Open() CLASS RDBMS_Dbf
 
-	LOCAL cFileDbf := ''
-	LOCAL cFileCdx := ''
-
-    IF !empty( ::cDbf )
-	
-		cFileDbf := ::cPath + '/' + ::cDbf
-		? 'Open Dbf', cFileDbf
-		IF !File( cFileDbf )
-		   ::SetError( 'Tabla de datos no existe: ' + ::cDbf )
-		   RETU .F.
-	    ENDIF
-		
-	ELSE
-	
-		RETU .F.
-		
-    ENDIF
-	
-	?? '=> Check File Ok...'		
-	
-    IF !empty( ::cCdx ) 
-		cFileCdx := ::cPath + '/' + ::cCdx
-		? 'Open Cdx', cFileCdx
-		IF !File( cFileCdx )
-			::SetError( 'Indice de datos no existe: ' + ::cCdx )
-			RETU .F.
-		ENDIF
-    ENDIF
-	
-	::OpenDbf( cFileDbf, cFileCdx )					
-	
-RETU NIL
-
-METHOD OpenDbf( cFileDbf, cFileCdx ) 
-
 	LOCAL oError
-	LOCAL cError 	 := ''
-    LOCAL nInici   := Seconds()
-    LOCAL nLapsus  := ::nTime
-    LOCAL bError   := Errorblock({ |o| ErrorHandler(o) })
+	LOCAL cError 	 	:= ''
+    LOCAL nIni  		:= 0
+    LOCAL nLapsus  	:= ::nTime
+    LOCAL bError   	:= Errorblock({ |o| ErrorHandler(o) })	
+	LOCAL cFileDbf 	:= ''
+	LOCAL cFileCdx 	:= ''
+	LOCAL lAutoOpen	:= Set( _SET_AUTOPEN, .F. )	//	SET AUTOPEN OFF
 	
+	//	Check files...
 
-    BEGIN SEQUENCE
+		IF !empty( ::cDbf )
+		
+			cFileDbf := ::cPath + '/' + ::cDbf
 
-          WHILE nLapsus >= 0
+			IF !File( cFileDbf )
+			   ::SetError( 'Tabla de datos no existe: ' + ::cDbf )
+			   RETU .F.
+			ENDIF
+			
+		ELSE
+		
+			RETU .F.
+			
+		ENDIF
+		
+		IF !empty( ::cIndex ) 
+		
+			cFileCdx := ::cPath + '/' + ::cIndex
+
+			IF !File( cFileCdx )
+				::SetError( 'Indice de datos no existe: ' + ::cIndex )
+				RETU .F.
+			ENDIF
+			
+		ENDIF
+		
+	//	Open table dbf...
+	
+		nIni  		:= Seconds()
+		
+		BEGIN SEQUENCE
+
+			  WHILE nLapsus >= 0
+
+				 IF Empty( ::cAlias )
+					::cAlias := NewAlias()
+				 ENDIF
+
+				 DbUseArea( .T., ::cRDD, cFileDbf, ::cAlias, ! ::lExclusive, ::lRead )
+
+				 IF !Neterr() .OR. ( nLapsus == 0 )
+					 EXIT
+				 ENDIF
 
 
-             IF Empty( ::cAlias )
-                ::cAlias := NewAlias()
-             ENDIF
+				 //SysWait( 0.1 )
 
-             DbUseArea( .T., ::cRDD, cFileDbf, ::cAlias, ! ::lExclusive, ::lRead )
+				 nLapsus := ::nTime - ( Seconds() - nIni )
 
-             IF !Neterr() .OR. ( nLapsus == 0 )
-                 EXIT
-             ENDIF
+				 //SysRefresh()
 
+			  END
 
-             //SysWait( 0.1 )
+			  IF NetErr()
+				 ::SetError( 'Error de apertura de: ' + cFileDbf )
+				ELSE
+				 ::cAlias := Alias()
+				 ::lOpen  := .t.
+				 
+				 IF !empty( cFileCdx )
+					SET INDEX TO (cFileCdx )			 			 
+				 ENDIF
+				 
+			  ENDIF
 
-             nLapsus := ::nTime - ( Seconds() - nInici )
+		   RECOVER USING oError	
 
-             //SysRefresh()
+				cError += if( ValType( oError:SubSystem   ) == "C", oError:SubSystem, "???" ) 
+				cError += if( ValType( oError:SubCode     ) == "N", " " + ltrim(str(oError:SubCode )), "/???" ) 
+				cError += if( ValType( oError:Description ) == "C", " " + oError:Description, "" )		
+			
+				::SetError( cError )			
 
-          END
-
-          IF NetErr()
-             ::SetError( 'Error de apertura de: ' + cFileDbf )
-            ELSE
-             ::cAlias := Alias()
-             ::lOpen  := .t.
-			 
-			 IF !empty( cFileCdx )
-				SET INDEX TO (cFileCdx )			 			 
-			 ENDIF
-			 
-          ENDIF
-
-       RECOVER USING oError
+	   END SEQUENCE	
 	   
-			? 'Error.....'
-		
-		//? oError:Subcode
-		
-          cError += valtochar(oError:Subcode)
-          cError += if( ValType( oError:SubSystem   ) == "C", oError:SubSystem(), "???" )
-          cError += if( ValType( oError:SubCode     ) == "N", "/" + ltrim(str(oError:SubCode )), "/???" )
-          cError += if( ValType( oError:Description ) == "C", "  " + oError:Description, "" )		
-		  
-		 ::ShowError( cError )
+	   
+	// Restore handler 		   
 
-   END SEQUENCE
-
+		ErrorBlock( bError )   
+		Set( _SET_AUTOPEN, lAutoOpen )		
+			
+	
 RETU NIL
 
 
@@ -189,7 +188,9 @@ METHOD SetError( cError ) CLASS RDBMS_Dbf
 
 	::cError := cError
 	
-	? 'SetError()', ::cError
+	IF ::lShowError			
+		? '<h3>Error', ::cDbf, ' => ', ::cError, '</h3>'
+	ENDIF
 	
 RETU NIL
 
@@ -233,8 +234,7 @@ METHOD Exit() CLASS RDBMS_Dbf
 			Eval( ::bExit )
 		ENDIF
 	
-		::Close() 
-		
+		::Close() 		
 		
 	ENDIF
 	
@@ -255,7 +255,6 @@ FUNCTION NewAlias()
     LOCAL n      	:= 0
     LOCAL cAlias
 	LOCAL cSeed 	:= 'ALIAS'
-
 
     cAlias  := cSeed + Ltrim(Str(n++))
 

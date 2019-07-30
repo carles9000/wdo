@@ -20,7 +20,9 @@ CLASS RDBMS
 	
 	DATA  cRdd		
 	DATA  cDbf		
-	DATA  cCdx		
+	DATA  cIndex	
+
+	DATA lShowError						INIT .T.	
 
 	METHOD New() 						CONSTRUCTOR
 
