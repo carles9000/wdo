@@ -34,10 +34,32 @@ FUNCTION Main()
 		? o:FieldGet( 'first' )
 		? o:Count()
 		? o:FieldName( 1 )
-		? o:next( 10 ), o:FieldGet( 1 )
-		? o:prev( 5 ), o:Recno(), o:FieldGet( 1 )
+		? o:next( 5 ), o:FieldGet( 1 )
+		? o:prev( 2 ), o:Recno(), o:FieldGet( 1 )
 		? o:last(), o:FieldGet( 1 )
-		? o:prev( 1),o:Recno(), o:FieldPut( 'first', time() )
-		? 'FIRST: ' , o:FieldGet( 'FIRST' ), o:Recno()
+		? o:first(),o:Recno(), o:FieldPut( 'last', time() )
+		? 'LAST: ' , o:FieldGet( 'last' ), o:Recno()
+		? '<hr>'
+		
+		o:first()
+		
+		?? '<table border="1">'
+		
+		FOR nI := 1 TO 10
+		
+			?? '<tr>' 
+			?? '<td>' + valtochar(o:Recno()) + '</td>' 
+			?? '<td>' + o:FieldGet( 1 ) + '</td>' 
+			?? '<td>' + o:FieldGet( 2 ) + '</td>' 
+			?? '<td>' + o:FieldGet( 3 ) + '</td>' 
+			?? '</tr>'
+			
+			o:next()
+			
+		NEXT
+		
+		?? '</table>'
+		
+		
 		
 RETU NIL
