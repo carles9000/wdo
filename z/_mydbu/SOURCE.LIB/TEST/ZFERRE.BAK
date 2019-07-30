@@ -1,0 +1,126 @@
+#include 'fivewin.ch'
+#include 'xBrowse.ch'
+
+
+FUNCTION zFerre()
+*----------------
+    LOCAL nOp, ozRs, oRs, oSql
+    LOCAL cSql := "select * from cataleg limit 0, 10"
+    LOCAL aRS  := {}
+
+    LOCAL oConn     := zAdoConnection():New()
+    LOCAL cId       := 'FERRE' + space(200)
+    LOCAL nLapsus
+
+    MsgGet( 'Conexio....', 'Id', @cId )
+
+    cId := Alltrim(cId)
+
+    oConn:LoadConfig( cId )
+
+    IF !oConn:Open()
+       RETU NIL
+    ENDIF
+
+    oConn:ShowInfo()
+
+    IF zEditSql( @cSql )
+
+       ozRs := zAdoRS():New( oConn )
+
+       IF ozRs:Open( cSql )
+
+          oSql := zSetRdd( ozRs )
+          oSql:Info()
+
+*          msginfo( oSql:codi )
+*          msginfo( oSql:txt)
+*          oSql:txt += ' ' + time()
+*          msginfo( oSql:txt)
+*          oSql:Save()
+
+       MsgRun( "Registre actual 0",;
+               "Processant...",;
+               { | oDlg | Executa( oDlg, oSql ) } )
+
+          oSql:GoTop()
+
+          oRs := ozRs:oRs
+
+          Brw( oRs, cSql )
+
+       ENDIF
+
+    ENDIF
+
+
+RETU NIL
+
+STATIC FUNCTION Brw( oRs, cTitle )
+
+   local oBrw, oChild, oBar
+   local oFont
+
+   DEFAULT cTitle := 'Browse'
+
+   DEFINE FONT oFont NAME 'TAHOMA' SIZE 0,-12
+
+   DEFINE WINDOW oChild MDICHILD OF GetAppWnd() TITLE cTitle
+
+      DEFINE BUTTONBAR oBar SIZE 22, 22 _3D OF oChild
+      DEFINE BUTTON OF oBar ACTION oChild:End()
+      DEFINE BUTTON OF oBar ACTION oBrw:Report()
+
+      @ 10,10 XBROWSE oBrw SIZE -10,-30 PIXEL OF oChild ;
+         AUTOSORT CELL LINES NOBORDER
+
+      WITH OBJECT oBrw
+         :nStretchCol  := STRETCHCOL_WIDEST
+         :SetAdo(  oRs )
+         :SetFont( oFont )
+         :CreateFromCode()
+      END
+
+      oChild:SetControl( oBrw )
+
+   ACTIVATE WINDOW oChild
+
+*   RELEASE FONT oFont
+
+return nil
+
+
+STATIC FUNCTION Executa( oDlg, oSql )
+    LOCAL nLapsus := Seconds()
+    LOCAL nRec    := oSql:RecCount()
+    LOCAL nEvery  := nRec / 100
+    LOCAL n       := 0
+    LOCAL lOk     := .t.
+
+
+    WHILE !oSql:Eof() .AND. lOk
+
+       n++
+
+       IF n > nEvery
+          n := 0
+
+         oDlg:cMsg := "Registre actual  " + ltrim(str(oSql:Recno(),0))
+         oDlg:Refresh()
+         SysRefresh()
+
+       ENDIF
+
+*       if oDlg:nlastkey == VK_ESCAPE
+*          msginfo('ep' )
+*          lOk := .f.
+*       endif
+
+
+       oSql:dummy  := time()
+       oSql:Save()
+       oSql:Skip()
+
+    END
+
+RETU NIL

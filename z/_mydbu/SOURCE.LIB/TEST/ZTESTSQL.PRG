@@ -1,0 +1,82 @@
+#include 'fivewin.ch'
+#include 'xBrowse.ch'
+
+
+FUNCTION zAdoTestSql()
+*---------------------
+    LOCAL nOp, oConn, ozRs, oRs, oSql
+    LOCAL cSql := ''
+    LOCAL aRS  := {}
+
+    WHILE ( nOp := zAdoSelConn() ) > 0
+
+        DO CASE
+           CASE nOp == 1 ; oConn := zAdoGetConn( 'DBF' )
+           CASE nOp == 2 ; oConn := zAdoGetConn( 'ACCESS' )
+           CASE nOp == 3 ; oConn := zAdoGetConn( 'MYSQL' )
+        ENDCASE
+
+        IF zEditSql( @cSql )
+
+            Aadd( aRs, zAdoRS():New( oConn ) )
+
+            ozRs := aRs[ Len(aRS) ]
+
+            IF ozRs:Open( cSql )
+
+                oSql := zSetRdd( ozRs )
+                oSql:Info()
+/*
+                msginfo( oSql:first + ' - ' + oSql:last + ' - ' + oSql:street)
+                oSql:Skip()
+                msginfo( oSql:first + ' - ' + oSql:last + ' - ' + oSql:street)
+                oSql:Skip()
+                msginfo( oSql:first + ' - ' + oSql:last + ' - ' + oSql:street)
+*/
+                oRs := ozRs:oRs
+
+*                msginfo( oSql:codi + ' - ' + oSql:txt )
+
+                Brw( oRs, cSql )
+
+           ENDIF
+
+        ENDIF
+
+    END
+
+RETU NIL
+
+STATIC FUNCTION Brw( oRs, cTitle )
+
+   local oBrw, oChild, oBar
+   local oFont
+
+   DEFAULT cTitle := 'Browse'
+
+   DEFINE FONT oFont NAME 'TAHOMA' SIZE 0,-12
+
+   DEFINE WINDOW oChild MDICHILD OF GetAppWnd() TITLE cTitle
+
+      DEFINE BUTTONBAR oBar SIZE 22, 22 _3D OF oChild
+      DEFINE BUTTON OF oBar ACTION oChild:End()
+      DEFINE BUTTON OF oBar ACTION oBrw:Report()
+
+      @ 10,10 XBROWSE oBrw SIZE -10,-30 PIXEL OF oChild ;
+         AUTOSORT CELL LINES NOBORDER
+
+      WITH OBJECT oBrw
+         :nStretchCol  := STRETCHCOL_WIDEST
+         :SetAdo(  oRs )
+         :SetFont( oFont )
+         :CreateFromCode()
+      END
+
+      oChild:SetControl( oBrw )
+
+   ACTIVATE WINDOW oChild
+
+*   RELEASE FONT oFont
+
+return nil
+

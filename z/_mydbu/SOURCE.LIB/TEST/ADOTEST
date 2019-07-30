@@ -1,0 +1,431 @@
+#include "FiveWin.ch"
+
+#define AE_LOCK_FAILED 5035
+
+STATIC oTConn
+
+*------------------
+FUNCTION AdoTest1()
+*------------------
+    LOCAL oCon  := TAdoConnection():New()
+
+    IF oCon:Open()
+       oCon:ShowInfo()
+       oCon:Close()
+    ENDIF
+
+RETU NIL
+
+*------------------
+FUNCTION AdoTest2()
+*------------------
+
+    LOCAL oCon      := TAdoConnection():New()
+    LOCAL cSection  := Space(20)
+
+    IF oCon:Open()
+       oCon:ShowInfo()
+       IF MsgYesNo( 'Salvar Configuracio?', 'Sistema' )
+          MsgGet('Cadena conexio', 'Etiqueta', @cSection )
+          cSection := Alltrim( cSection )
+          oCon:SaveConfig( cSection )
+       ENDIF
+       oCon:Close()
+    ENDIF
+
+RETU NIL
+
+
+*------------------
+FUNCTION AdoTest3()  // Conexio Automatica
+*------------------
+
+    LOCAL oCon      := TAdoConnection():New()
+    LOCAL cSection  := Space(20)
+
+    IF MsgYesNo( 'Cargar Configuracio?', 'Sistema' )
+       MsgGet('Cadena conexio', 'Etiqueta', @cSection )
+       cSection := Alltrim( cSection )
+       oCon:LoadConfig( cSection )
+*       oCon:LoadConfig()
+       IF oCon:Open()
+          oCon:ShowInfo()
+          oCon:Close()
+       ENDIF
+    ENDIF
+
+RETU NIL
+
+*------------------------
+FUNCTION AdoTestConnect()
+*------------------------
+
+    IF ValType( oTConn ) <> 'O'
+       oTConn := TAdoConnection():New()
+       oTConn:LoadConfig()
+       IF oTConn:Open()
+          oTConn:ShowInfo()
+         ELSE
+          msgalert( 'error' )
+       ENDIF
+      ELSE
+       oTConn:Close()
+       oTConn := NIL
+       MsgInfo( 'Conexion cerrada', 'Ado Connection' )
+    ENDIF
+
+RETU NIL
+
+*------------------
+FUNCTION AdoTest4()  // Conexio Automatica + Open oRS
+*------------------
+    LOCAL oTRs_A, cSql_A
+    LOCAL oTRs_B, cSql_B
+
+    IF ValType( oTConn ) <> 'O'
+       MsgAlert( 'No existe Conexion', 'ADO Connect' )
+       RETU .F.
+    ENDIF
+
+    oTRs_A := TAdoRecordSet():New( oTConn )
+    cSql_A := "SELECT * FROM TESTFREE WHERE AGE = 90"
+
+    IF oTRs_A:Open( cSql_A )
+       Ado2Mdi( oTRs_A:oRs, cSql_A )
+    ENDIF
+
+    oTRs_B := TAdoRecordSet():New( oTConn )
+    cSql_B := "SELECT * FROM TESTFREE WHERE AGE = 95"
+
+    IF oTRs_B:Open( cSql_B )
+       Ado2Mdi( oTRs_B:oRs, cSql_B )
+    ENDIF
+
+    GetoWnd():Tile(.t.)
+
+RETU NIL
+
+
+
+*------------------
+FUNCTION AdoTest5()
+*------------------
+    LOCAL oTRs_A, cSql_A
+
+    IF ValType( oTConn ) <> 'O'
+       MsgAlert( 'No existe Conexion', 'ADO Connect' )
+       RETU .F.
+    ENDIF
+
+    oTRs_A := TAdoRecordSet():New( oTConn )
+    cSql_A := "SELECT * FROM TESTFREE WHERE AGE = 90"
+
+    IF oTRs_A:Open( cSql_A ) == .F.
+       RETU .F.
+    ENDIF
+
+    ShowRegister( oTRs_A )
+
+
+RETU NIL
+
+
+*----------------------------------
+STATIC FUNCTION ShowRegister( oRs )
+*----------------------------------
+
+    MsgInfo( 'First'    + Chr( VK_TAB ) + ': ' + oRS:First           + CRLF + ;
+             'Last'     + Chr( VK_TAB ) + ': ' + oRS:Last            + CRLF + ;
+             'Street'   + Chr( VK_TAB ) + ': ' + oRS:Street          + CRLF + ;
+             'City'     + Chr( VK_TAB ) + ': ' + oRS:City            + CRLF + ;
+             'State'    + Chr( VK_TAB ) + ': ' + oRS:State           + CRLF + ;
+             'Zip'      + Chr( VK_TAB ) + ': ' + oRS:Zip             + CRLF + ;
+             'Hiredate' + Chr( VK_TAB ) + ': ' + DToC( oRS:Hiredate ) + CRLF + ;
+             'Married'  + Chr( VK_TAB ) + ': ' + IF( oRS:Married, 'S', 'N' ) + CRLF + ;
+             'Age'      + Chr( VK_TAB ) + ': ' + Ltrim(Str( oRS:Age, 3 ))    + CRLF + ;
+             'Salary'   + Chr( VK_TAB ) + ': ' + LTrim(Str( oRS:Salary, 8 )) + CRLF + ;
+             'Notes'    + Chr( VK_TAB ) + ': ' + oRS:Notes           )
+
+RETU NIL
+
+
+
+*------------------
+FUNCTION AdoTest6()   // Campo no existe
+*------------------
+    LOCAL oTRs_A, cSql_A
+
+    IF ValType( oTConn ) <> 'O'
+       MsgAlert( 'No existe Conexion', 'ADO Connect' )
+       RETU .F.
+    ENDIF
+
+    oTRs_A := TAdoRecordSet():New( oTConn )
+    cSql_A := "SELECT * FROM TESTFREE WHERE AGE = 90"
+
+    IF oTRs_A:Open( cSql_A ) == .F.
+       RETU .F.
+    ENDIF
+
+    MsgInfo( oTrs_A:xxx )
+
+    oTRs_A:Close()
+
+RETU NIL
+
+*------------------
+FUNCTION AdoTest7()   // Test RDD
+*------------------
+    LOCAL oTRs
+    LOCAL cSql := "SELECT * FROM TESTFREE WHERE AGE = 90                              "
+
+    IF ValType( oTConn ) <> 'O'
+       MsgAlert( 'No existe Conexion', 'ADO Connect' )
+       RETU .F.
+    ENDIF
+
+    oTRs := TAdoRecordSet():New( oTConn )
+
+    IF !MsgGet( 'Query', 'SQL', @cSql )
+       RETU .F.
+    ENDIF
+
+    cSql := Alltrim( cSql )
+
+    IF oTRs:Open( cSql ) == .F.
+       RETU .F.
+    ENDIF
+
+msginfo( oTRs:oRs:RecordCount(), 'oRs:RecordCount() 0' )
+
+*    IF oTRs:Eof() .AND. oTRs:Bof()
+    IF oTRs:Empty()
+       MsgAlert( 'Empty RecordSet', 'ADO RecordSet' )
+       RETU .F.
+    ENDIF
+
+    oTRs:GoBottom()
+msginfo( oTRs:Recno() , 'TOTAL' )
+msginfo( oTRs:bookmark , 'BookMark()' )
+    oTRs:GoTop()
+
+    Ado2Mdi( oTRs:oRs, cSql )
+
+msginfo( oTRs:LastRec(), 'LastRec() 1' )
+msginfo( oTRs:oRs:RecordCount(), 'oRs:RecordCount() 1' )
+msginfo( oTRs:GoTop() , 'GoTop() 1' )
+msginfo( oTRs:Recno() , 'Recno() 1' )
+msginfo( oTRs:bookmark , 'BookMark() 1' )
+     ShowRegister( oTrs )
+
+msginfo( oTRs:Skip() , 'Skip()'  )
+msginfo( oTRs:LastRec(), 'LastRec() 2' )
+msginfo( oTRs:Recno() , 'Recno() 2' )
+msginfo( oTRs:bookmark , 'BookMark() 2' )
+     ShowRegister( oTrs )
+
+msginfo( oTRs:Skip() , 'Skip()'  )
+msginfo( oTRs:LastRec(), 'LastRec()' )
+msginfo( oTRs:Recno() , 'Recno()' )
+msginfo( oTRs:bookmark , 'BookMark()' )
+     ShowRegister( oTrs )
+
+RETU NIL
+
+*------------------
+FUNCTION AdoTest71()   // Test GetRow()
+*------------------
+    LOCAL oTRs
+*    LOCAL cSql := "SELECT * FROM TESTFREE WHERE AGE = 90                              "
+    LOCAL cSql := "SELECT * FROM TEST WHERE ZIP = '50590-0589'                       "
+    LOCAL n
+    LOCAL aReg   := {}
+    LOCAL cLog := ''
+    LOCAL nIni, nFi
+
+    IF ValType( oTConn ) <> 'O'
+       MsgAlert( 'No existe Conexion', 'ADO Connect' )
+       RETU .F.
+    ENDIF
+
+    oTRs := TAdoRecordSet():New( oTConn )
+
+    IF !MsgGet( 'Query', 'SQL', @cSql )
+       RETU .F.
+    ENDIF
+
+    cSql := Alltrim( cSql )
+
+  Item_BD( .T. )
+    nIni := Seconds()
+
+    IF oTRs:Open( cSql ) == .F.
+       Item_BD( .F. )
+       RETU .F.
+    ENDIF
+
+    nFi  := Seconds() - nIni
+    cLog := 'Exec SQL      ' + Chr( VK_TAB ) + ': ' + ltrim(str(nFi)) + ' seg.'
+
+  Item_BD( .F. )
+
+   IF oTRs:Empty()
+      MsgAlert( 'No records found' )
+      RETU .F.
+   ENDIF
+
+  Item_BD( .T. )
+
+    nIni := Seconds()
+    n    := oTrs:oRs:RecordCount()
+    nFi  := Seconds() - nIni
+    cLog += CRLF
+    cLog += 'RecordCount()' + Chr( VK_TAB ) + ': ' + ltrim(str(nFi)) + ' seg.'
+
+  Item_BD( .F. )
+
+*  Item_BD( .T. )
+*
+*    nIni := Seconds()
+*    n    := oTrs:LastRec()
+*    nFi  := Seconds() - nIni
+*    cLog += CRLF
+*    cLog += 'RecordCount()' + Chr( VK_TAB ) + ': ' + ltrim(str(nFi)) + ' seg.'
+*
+*  Item_BD( .F. )
+
+
+*   msginfo( 'Registres: ' + Ltrim(Str(n))  )
+
+  Item_BD( .T. )
+
+    nIni := Seconds()
+    aReg := oTRs:oRs:GetRows()
+    nFi  := Seconds() - nIni
+    cLog += CRLF
+    cLog += 'GetRows()' + Chr( VK_TAB ) + ': ' + ltrim(str(nFi)) + ' seg.'
+
+  Item_BD( .F. )
+
+    MsgInfo( cLog, 'Lapsus' )
+
+*    VerTable( aReg, , 'Registros: ' + Ltrim(STR( Len(aReg) )) )
+    VerTable( aReg, , 'Registros: ' + Ltrim(STR( n )) )
+
+RETU NIL
+
+*------------------
+FUNCTION AdoTest72()   // Test GetRow()
+*------------------
+    LOCAL oTRs
+    LOCAL cSql    := "SELECT * FROM TESTFREE WHERE AGE = 90                              "
+    LOCAL aFields := { 'First', 'State', 'Age' }
+*    LOCAL aFields := { 0,5,6}
+    LOCAL aReg    := {}
+
+    IF ValType( oTConn ) <> 'O'
+       MsgAlert( 'No existe Conexion', 'ADO Connect' )
+       RETU .F.
+    ENDIF
+
+    oTRs := TAdoRecordSet():New( oTConn )
+
+    IF !MsgGet( 'Query', 'SQL', @cSql )
+       RETU .F.
+    ENDIF
+
+    cSql := Alltrim( cSql )
+
+  Item_BD( .T. )
+    IF oTRs:Open( cSql ) == .F.
+       Item_BD( .F. )
+       RETU .F.
+    ENDIF
+  Item_BD( .F. )
+
+   IF oTRs:Empty()
+      MsgAlert( 'No records found' )
+      RETU .F.
+   ENDIF
+
+*--------------------------------------------------------------------------
+*    aReg := oTRs:oRs:GetRows() -> Funciona, pero si volem especificar els
+*                                  camps (3. parametre) tindrem de posar
+*                                  els dos primers paramteres. Per defecte
+*                                  1.=> -1 (TOTS els registres)
+*                                  2.=>  0 Desde el registre actual, per defecte inici
+*--------------------------------------------------------------------------
+
+  Item_BD( .T. )
+
+    aReg := oTRs:oRs:GetRows( -1 , 0 , aFields )
+
+  Item_BD( .F. )
+
+*inspect( oTRS )
+
+    VerTable( aReg, aFields, 'Registros: ' + Ltrim(STR( Len(aReg) )) )
+
+
+msginfo( 'altre' )
+
+    cSql    := "SELECT * FROM TESTFREE WHERE AGE = 70"
+
+msginfo(1)
+  Item_BD( .T. )
+    IF oTRs:oRs:Open( cSql ) == .F.
+msginfo(2)
+       Item_BD( .F. )
+       RETU .F.
+    ENDIF
+  Item_BD( .F. )
+
+msginfo(3)
+   IF oTRs:Empty()
+      MsgAlert( 'No records found' )
+      RETU .F.
+   ENDIF
+
+  Item_BD( .T. )
+msginfo(4)
+
+    aReg := oTRs:oRs:GetRows( -1 , 0 , aFields )
+
+  Item_BD( .F. )
+
+*inspect( oTRS )
+msginfo(5)
+
+    VerTable( aReg, aFields, 'Registros: ' + Ltrim(STR( Len(aReg) )) )
+
+
+
+RETU NIL
+
+
+*------------------
+FUNCTION AdoTest8()   // Test Query
+*------------------
+    LOCAL oRs
+    LOCAL n    := 4
+    LOCAL cSql := "SELECT * FROM TESTFREE WHERE AGE = 90                              "
+
+    IF ValType( oTConn ) <> 'O'
+       MsgAlert( 'No existe Conexion', 'ADO Connect' )
+       RETU .F.
+    ENDIF
+
+    IF !MsgGet( 'Query', 'SQL', @cSql )
+       RETU .F.
+    ENDIF
+
+    cSql := Alltrim( cSql )
+
+    IF  oTConn:Execute( cSql, @n )
+        Ado2Mdi( oTConn:oRs, cSql )
+    ENDIF
+
+RETU NIL
+
+
+

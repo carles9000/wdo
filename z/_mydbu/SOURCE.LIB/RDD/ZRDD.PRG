@@ -1,0 +1,852 @@
+#include 'Fivewin.ch'
+#include 'error.ch'
+
+#define DBS_NAME     1
+#define DBS_TYPE     2
+#define DBS_LEN      3
+#define DBS_DEC      4
+
+*------------------------------
+FUNCTION zSetRdd( oDataSource ) ; RETU zRdd():New( oDataSource )
+*------------------------------
+
+*---------
+CLASS zRdd
+*---------
+
+   DATA   oDataSource
+   DATA   aBuffer                AS ARRAY
+   DATA   aModify                AS ARRAY
+   DATA   aLoad                  AS ARRAY
+   DATA   cAlias                 AS CHARACTER INIT ""
+   DATA   cClass                 AS CHARACTER INIT ""
+
+   DATA   nFields                AS NUMERIC INIT 0
+   DATA   aFldNames              AS ARRAY
+   DATA   aFldType               AS ARRAY
+   DATA   aFldLen                AS ARRAY
+   DATA   aFldDec                AS ARRAY
+   DATA   lMessage
+   DATA   lError                 AS LOGICAL INIT .T.
+   DATA   lDebug                 AS LOGICAL INIT .F.
+
+   DATA   bMis_Ins
+   DATA   bMis_Bloc
+
+   METHOD New( oDataSource )   CONSTRUCTOR
+
+   METHOD Deleted()
+   METHOD Delete()
+   METHOD Recall()
+   METHOD Blank()
+   METHOD Seek( uExpr, lSoft )
+   METHOD Focus( cTag )
+   METHOD Skip( nRecords )
+   METHOD Append()
+   METHOD Insert()                     INLINE ::Append()
+   METHOD Rlock( nReg )
+   METHOD Unlock( nReg )
+   METHOD Save()
+   METHOD Close()
+   METHOD End()                        INLINE ::Close()
+   METHOD FCount()                     INLINE ::nFields
+   METHOD BOF()
+   METHOD EOF()
+   METHOD Commit()
+   METHOD Reset()
+   METHOD Empty()
+   METHOD BookMark()                   INLINE ::Recno()
+
+   METHOD GoTo( nRecNo )
+   METHOD GoTop()
+   METHOD GoBottom()
+
+   METHOD Reccount()
+   METHOD Pack()
+   METHOD Recno()
+   METHOD Zap()
+
+   METHOD Info()
+   METHOD Browse()                     INLINE xBrowse( ::cAlias )
+
+   MESSAGE FieldGet                    METHOD _FieldGet( nField )
+   MESSAGE FieldPut                    METHOD _FieldPut( nPos, uValue )
+   METHOD  FieldPos( cFieldName )
+
+   ERROR HANDLER OnError( uParam1 )
+
+ENDCLASS
+
+*-----------------------------
+METHOD New( oData ) CLASS zRdd
+*-----------------------------
+    LOCAL n, nLen
+    LOCAL aStr := {}
+
+    ::oDataSource  := oData
+
+    ::lMessage  := .T.
+    ::lError    := .F.
+    ::bMis_Ins  := 'Error insertando registro'
+    ::bMis_Bloc := 'Registro bloqueado'
+    ::lDebug    := .F.
+    ::cClass    := IF( ValType( oData ) == 'O',  oData:ClassName(), '' )
+
+    IF Empty( ::cClass )
+       RETU Self
+    ENDIF
+
+    DO CASE
+       CASE ::cClass == 'ZFILEDBF' ; InitDbf( Self )
+       CASE ::cClass == 'ZADORS'   ; InitAdo( Self )
+    ENDCASE
+
+
+RETU Self
+
+
+*------------------------
+METHOD Blank() CLASS zRdd
+*------------------------
+   LOCAL n, nRecno, uVal
+
+    DO CASE
+
+       CASE ::cClass == 'ZFILEDBF'
+
+            nRecno := ( ::cAlias )->( RecNo() )
+
+            (::cAlias)->( DBGoBottom() )
+            (::cAlias)->( DBSkip( 1 ) )
+
+            FOR n = 1 to ::nFields
+               ::aBuffer[ n ] = ( ::cAlias )->( FieldGet( n ) )
+               ::aLoad  [ n ] = .T.
+            NEXT
+
+            (::cAlias)->( DBGoTo( nRecNo ) )
+
+       CASE ::cClass == 'ZADORS'
+
+
+           FOR n := 1 TO ::nFields
+
+               DO CASE
+                  CASE ::aFldType[ n ] == 'C'
+                       uVal := Replicate( ' ', ::aFldLen[ n ] )
+                  CASE ::aFldType[ n ] == 'N'
+                       uVal := 0
+                  CASE ::aFldType[ n ] == 'D'
+                       uVal := CToD( '  -  -  ' )
+                  CASE ::aFldType[ n ] == 'L'
+                       uVal := .F.
+                  CASE ::aFldType[ n ] == 'M'
+                       uVal := ''
+               ENDCASE
+
+               ::aBuffer[ n ] = uVal
+               ::aLoad  [ n ] = .T.
+
+            NEXT
+
+
+    ENDCASE
+
+
+
+RETU nil
+
+*------------------------
+METHOD Reset() CLASS zRdd
+*------------------------
+
+   AFill( ::aModify, .F. )
+   AFill( ::aLoad  , .F. )
+   AFill( ::aBuffer, NIL )
+
+RETU NIL
+
+*----------------------
+METHOD Zap() CLASS zRdd
+*----------------------
+
+    DO CASE
+       CASE ::cClass == 'ZFILEDBF' ; ( ::cAlias )->( __DbZap() )
+       CASE ::cClass == 'ZADORS'
+    ENDCASE
+
+RETU NIL
+
+*-----------------------
+METHOD Pack() CLASS zRdd
+*-----------------------
+
+    DO CASE
+       CASE ::cClass == 'ZFILEDBF' ; ( ::cAlias )->( __DbPack() )
+       CASE ::cClass == 'ZADORS'
+    ENDCASE
+
+RETU NIL
+
+
+
+*-------------------------------------
+METHOD Seek( uExpr, lSoft ) CLASS zRdd
+*-------------------------------------
+    LOCAL lFound
+
+    DEFAULT lSoft := Set( _SET_SOFTSEEK )
+
+    ::Reset()
+
+    DO CASE
+       CASE ::cClass == 'ZFILEDBF'
+            lFound := ( ::cAlias )->( DbSeek( uExpr, lSoft ) )
+       CASE ::cClass == 'ZADORS'
+    ENDCASE
+
+RETU lFound
+
+
+*--------------------------
+METHOD Deleted() CLASS zRdd
+*--------------------------
+
+    DO CASE
+       CASE ::cClass == 'ZFILEDBF' ; ( ::cAlias )->( Deleted() )
+       CASE ::cClass == 'ZADORS'
+    ENDCASE
+
+RETU NIL
+
+*-------------------------
+METHOD Recall() CLASS zRdd
+*-------------------------
+
+    DO CASE
+       CASE ::cClass == 'ZFILEDBF'
+
+            ( ::cAlias )->( DbRecall() )
+
+    ENDCASE
+
+RETU NIL
+
+
+*-------------------------
+METHOD Delete() CLASS zRdd
+*-------------------------
+   LOCAL oConn, oError, oRs
+   LOCAL lError   := .F.
+
+
+    DO CASE
+       CASE ::cClass == 'ZFILEDBF' ; ( ::cAlias )->( DbDelete() )
+       CASE ::cClass == 'ZADORS'
+
+            oRs := ::oDataSource:oRs
+
+            TRY
+
+              oRs:Delete(1)    // 1 .-> adAffectCurrent
+*             oRs:Update()
+
+            CATCH oError
+
+              oConn := ::oDataConnection:GetoConn()
+
+              FOR EACH oError IN oConn
+                  ::cError := zAdoError( oError, ::oDataSource:oAdoConnection:lMessage )
+              NEXT
+
+            END
+
+    ENDCASE
+
+RETU NIL
+
+*------------------------------
+METHOD Focus( cTag ) CLASS zRdd
+*------------------------------
+
+    DO CASE
+       CASE ::cClass == 'ZFILEDBF' ; ( ::cAlias )->( OrdSetFocus( cTag ) )
+
+    ENDCASE
+
+RETU NIL
+
+*------------------------------
+METHOD RLock( nReg ) CLASS zRdd
+*------------------------------
+    LOCAL lLock := .t.
+
+    DO CASE
+       CASE ::cClass == 'ZFILEDBF' ; lLock := ( ::cAlias )->( zRLock( , , nReg ) )
+    ENDCASE
+
+    IF ! lLock .AND. ::lMessage
+         MsgInfo( ::bMis_Bloc )
+    ENDIF
+
+RETU lLock
+
+*-------------------------
+METHOD Commit() CLASS zRdd
+*-------------------------
+
+    DO CASE
+       CASE ::cClass == 'ZFILEDBF' ; ( ::cAlias )->( DbCommit() )
+
+    ENDCASE
+
+RETU NIL
+
+
+*-----------------------------
+METHOD GoTo( nReg ) CLASS zRdd
+*-----------------------------
+
+    DO CASE
+       CASE ::cClass == 'ZFILEDBF' ; ( ::cAlias )->( DbGoto( nReg ) )
+       CASE ::cClass == 'ZADORS'   ; ::oDataSource:oRs:AbsolutePosition := nReg
+    ENDCASE
+
+    ::Reset()
+
+RETU NIL
+
+
+*------------------------
+METHOD GoTop() CLASS zRdd
+*------------------------
+
+    DO CASE
+       CASE ::cClass == 'ZFILEDBF' ; ( ::cAlias )->( DbGotop() )
+       CASE ::cClass == 'ZADORS'   ; ::oDataSource:oRs:MoveFirst()
+    ENDCASE
+
+    ::Reset()
+
+RETU NIL
+
+
+*---------------------------
+METHOD GoBottom() CLASS zRdd
+*---------------------------
+
+    DO CASE
+       CASE ::cClass == 'ZFILEDBF' ; ( ::cAlias )->( DbGoBottom() )
+       CASE ::cClass == 'ZADORS'   ; ::oDataSource:oRs:MoveLast()
+    ENDCASE
+
+    ::Reset()
+
+RETU NIL
+
+
+
+*----------------------
+METHOD BoF() CLASS zRdd
+*----------------------
+    LOCAL lOk := .t.
+
+    DO CASE
+       CASE ::cClass == 'ZFILEDBF' ; lOk := ( ::cAlias )->( BoF() )
+       CASE ::cClass == 'ZADORS'   ; lOk := ::oDataSource:oRs:Bof()
+    ENDCASE
+
+RETU lOk
+
+*----------------------
+METHOD EoF() CLASS zRdd
+*----------------------
+    LOCAL lOk := .t.
+
+    DO CASE
+       CASE ::cClass == 'ZFILEDBF' ; lOk := ( ::cAlias )->( EoF() )
+       CASE ::cClass == 'ZADORS'   ; lOk := ::oDataSource:oRs:Eof()
+    ENDCASE
+
+RETU lOk
+
+
+*---------------------------
+METHOD RecCount() CLASS zRdd
+*---------------------------
+    LOCAL nReg
+
+    DO CASE
+       CASE ::cClass == 'ZFILEDBF' ; nReg := ( ::cAlias )->( RecCount() )
+       CASE ::cClass == 'ZADORS'   ; nReg := ::oDataSource:oRs:RecordCount()
+    ENDCASE
+
+RETU nReg
+
+*------------------------
+METHOD RecNo() CLASS zRdd
+*------------------------
+    LOCAL nReg
+
+    DO CASE
+       CASE ::cClass == 'ZFILEDBF' ; nReg := ( ::cAlias )->( RecNo() )
+       CASE ::cClass == 'ZADORS'
+
+            IF ::Empty()
+               nReg := 0
+              ELSE
+               nReg := ::oDataSource:oRs:BookMark
+            ENDIF
+
+    ENDCASE
+
+RETU nReg
+
+*------------------------
+METHOD Empty() CLASS zRdd
+*------------------------
+    LOCAL lEmpty := .f.
+
+    DO CASE
+       CASE ::cClass == 'ZFILEDBF'
+            IF ( ::cAlias )->( Eof() ) .AND. ( ::cAlias )-( Bof() )
+               lEmpty := .t.
+            ENDIF
+       CASE ::cClass == 'ZADORS'
+
+            IF ::oDataSource:oRs:Eof() .AND. ::oDataSource:oRs:Bof()
+               lEmpty := .t.
+            ENDIF
+    ENDCASE
+
+RETU lEmpty
+
+*---------------------------------
+METHOD Skip( nRecords ) CLASS zRdd
+*---------------------------------
+    DEFAULT nRecords := 1
+
+    ::Reset()
+
+    DO CASE
+       CASE ::cClass == 'ZFILEDBF' ; ( ::cAlias )->( DbSkip( nRecords ) )
+       CASE ::cClass == 'ZADORS'   ; ::oDataSource:oRs:Move( nRecords, 0 )
+    ENDCASE
+
+RETU NIL
+
+
+*-------------------------
+METHOD Append() CLASS zRdd
+*-------------------------
+    LOCAL lOk := .f.
+    LOCAL oConn, oError, oRs
+
+    DO CASE
+       CASE ::cClass == 'ZFILEDBF' ; lOk := ( ::cAlias )->( zAppend() )
+       CASE ::cClass == 'ZADORS'
+
+         TRY
+
+             ::oRs:AddNew()
+
+             lOk := .t.
+
+           CATCH oError
+
+              oConn := ::oDataConnection:GetoConn()
+
+              FOR EACH oError IN oConn
+                  ::cError := zAdoError( oError, ::oDataSource:oAdoConnection:lMessage )
+              NEXT
+
+
+         END
+
+    ENDCASE
+
+    IF lOk
+       ::Reset()
+    ENDIF
+
+    IF ! lOk .AND. ::lMessage
+         MsgInfo( ::bMis_Ins )
+    ENDIF
+
+RETU lOk
+
+*-------------------------
+METHOD UnLock() CLASS zRdd
+*-------------------------
+    LOCAL lOk
+
+    DO CASE
+       CASE ::cClass == 'ZFILEDBF' ; lOk := ( ::cAlias )->( DbUnlock() )
+
+    ENDCASE
+
+RETU NIL
+
+
+*-----------------------
+METHOD Save() CLASS zRdd
+*-----------------------
+
+    DO CASE
+       CASE ::cClass == 'ZFILEDBF' ; SaveDbf( Self )
+       CASE ::cClass == 'ZADORS'   ; SaveAdo( Self )
+    ENDCASE
+
+
+RETU NIL
+
+*------------------------
+METHOD Close() CLASS zRdd
+*------------------------
+
+    DO CASE
+       CASE ::cClass == 'ZFILEDBF'
+
+            ::oDataSource:Close()
+            ::cAlias             := ''
+
+    ENDCASE
+
+RETU NIL
+
+*-----------------------------------
+METHOD OnError( uParam1 ) CLASS zRdd
+*-----------------------------------
+    LOCAL cMsg    := __GetMessage()
+    LOCAL nField
+
+    IF SubStr( cMsg, 1, 1 ) == "_"  // SET
+
+       IF( ( nField := ::FieldPos( SubStr( cMsg, 2 ) ) ) != 0 )
+          ::FieldPut( nField, uParam1 )
+        ELSE
+*          MsgBeep()
+          MsgInfo( "Campo no existe: " + cMsg , 'zRdd() - Set ' + ProcName(1) )
+       ENDIF
+
+    ELSE  // GET
+
+       IF( ( nField := ::FieldPos( cMsg ) ) != 0 )
+          RETU ::FieldGet( nField )
+        ELSE
+*          MsgBeep()
+          MsgInfo( "Campo no existe: " + cMsg , 'zRdd() - Set ' + ProcName(1) )
+       ENDIF
+
+    ENDIF
+
+RETU NIL
+
+*-----------------------------------
+METHOD FieldPos( cField ) CLASS zRdd
+*-----------------------------------
+    LOCAL nPos := 0
+
+    DO CASE
+       CASE ::cClass == 'ZFILEDBF' ; nPos := ( ::cAlias )->( FieldPos( cField ) )
+       CASE ::cClass == 'ZADORS'   ; nPos := Ascan( ::aFldNames, Upper(cField) )
+    ENDCASE
+
+RETU nPos
+
+
+*----------------------------------
+METHOD _FieldGet( nPos ) CLASS zRdd
+*----------------------------------
+    LOCAL uVar := NIL
+    LOCAL cField, oField
+
+    DO CASE
+       CASE ::cClass == 'ZFILEDBF'
+
+            IF ::aLoad  [nPos] == .F.
+               ::aBuffer[nPos] := (::cAlias)->( FieldGet(nPos) )
+               ::aLoad  [nPos] := .T.
+            ENDIF
+
+            uVar := ::aBuffer[nPos]
+
+       CASE ::cClass == 'ZADORS'
+
+           IF ::aLoad  [nPos] == .F.
+
+              IF nPos > 0 .AND. nPos < ::nFields
+
+                 cField := ::aFldNames[ nPos ]
+
+                 IF ( oField := ::oDataSource:oRs:Fields( cField ) ) != NIL
+                    ::aBuffer[nPos] := oField:value
+                    ::aLoad  [nPos] := .T.
+                 ENDIF
+
+              ENDIF
+
+           ENDIF
+
+           uVar := ::aBuffer[nPos]
+
+    ENDCASE
+
+RETU uVar
+
+*------------------------------------------
+METHOD _FieldPut( nPos, uValue ) CLASS zRdd
+*------------------------------------------
+
+    DO CASE
+       CASE ::cClass == 'ZFILEDBF'
+
+            IF ::aBuffer[ nPos ] <> uValue
+               ::aModify[ nPos ] := .T.
+            ENDIF
+
+            ::aLoad  [ nPos ] := .T.
+            ::aBuffer[ nPos ] := uValue
+
+       CASE ::cClass == 'ZADORS'
+
+            IF ::aBuffer[ nPos ] <> uValue
+               ::aModify[ nPos ] := .T.
+            ENDIF
+
+            ::aLoad  [ nPos ] := .T.
+            ::aBuffer[ nPos ] := uValue
+    ENDCASE
+
+RETU NIL
+
+
+*-----------------------
+METHOD Info() CLASS zRdd
+*-----------------------
+    LOCAL cTxt := ''
+    LOCAL nI
+
+    FOR nI := 1 TO ::nFields
+        cTxt += ::aFldNames[nI] + Chr( VK_TAB ) + Chr( VK_TAB )
+        cTxt += ::aFldType[nI] + Chr( VK_TAB ) + cValToChar( ::aFldLen[nI] ) + Chr( VK_TAB )
+        cTxt += cValToChar( ::aFldDec[nI] ) + CRLF
+    NEXT
+
+    MsgInfo( cTxt, 'Info' )
+
+RETU NIL
+
+
+
+*------------------------------------------
+STATIC FUNCTION ErrorSave( e, lLocalError )
+*------------------------------------------
+
+     IF e:genCode == EG_OPEN .AND. ;
+        e:osCode  == 32      .AND. ;
+        e:canDefault
+          NetErr(.T.)
+          RETU .F.
+     END
+
+     IF lLocalError
+        MsgBeep()
+*        MsgStop( ERR_DESCRIPTION + OemToAnsi( e:descriptio ) + CRLF + ;
+*                 ERR_FILENAME    + Lower( e:filename )       + CRLF + ;
+*                 ERR_SUBSYSTEM   + e:subsystem, 'System' )
+
+        BREAK e
+     ENDIF
+
+RETU NIL
+
+//--------------------
+
+*---------------------------
+STATIC FUNCTION InitDbf( o )
+*---------------------------
+    LOCAL nLen, n
+    LOCAL aStr
+
+
+    IF o:oDataSource:lOpen
+
+       o:cAlias    := o:oDataSource:cAlias
+
+       aStr := (o:cAlias)->( DbStruct() )
+
+       nLen        := Len( aStr )
+
+       o:nFields   := nLen
+       o:aFldNames := Array( nLen )
+       o:aFldType  := Array( nLen )
+       o:aFldLen   := Array( nLen )
+       o:aFldDec   := Array( nLen )
+       o:aModify   := Array( nLen )
+       o:aLoad     := Array( nLen )
+       o:aBuffer   := Array( nLen )
+
+       FOR n = 1 TO nLen
+          o:aFldNames[n] :=  aStr[ n ][ DBS_NAME ]
+          o:aFldType [n] :=  aStr[ n ][ DBS_TYPE ]
+          o:aFldLen  [n] :=  aStr[ n ][ DBS_LEN  ]
+          o:aFldDec  [n] :=  aStr[ n ][ DBS_DEC  ]
+       NEXT
+
+       o:Reset()
+
+      ELSE
+
+       o:lError := .T.
+       o:cError := o:oDataSource:cError
+
+    ENDIF
+
+RETU NIL
+
+
+*---------------------------
+STATIC FUNCTION InitAdo( o )
+*---------------------------
+    LOCAL nLen, n
+    LOCAL aStr
+
+    IF o:oDataSource:lOpen
+
+       o:cAlias    := ''
+
+       aStr := o:oDataSource:aStruct
+
+       nLen        := Len( aStr )
+       o:nFields   := nLen
+       o:aFldNames := Array( nLen )
+       o:aFldType  := Array( nLen )
+       o:aFldLen   := Array( nLen )
+       o:aFldDec   := Array( nLen )
+       o:aModify   := Array( nLen )
+       o:aLoad     := Array( nLen )
+       o:aBuffer   := Array( nLen )
+
+       FOR n = 1 TO nLen
+          o:aFldNames[n] :=  Upper( aStr[ n ][ DBS_NAME ] )
+          o:aFldType [n] :=  aStr[ n ][ DBS_TYPE ]
+          o:aFldLen  [n] :=  aStr[ n ][ DBS_LEN  ]
+          o:aFldDec  [n] :=  aStr[ n ][ DBS_DEC  ]
+       NEXT
+
+       o:Reset()
+
+      ELSE
+
+       o:lError := .T.
+       o:cError := o:oDataSource:cError
+
+    ENDIF
+
+RETU NIL
+
+
+*---------------------------
+STATIC FUNCTION SaveDbf( o )
+*---------------------------
+    LOCAL n
+    LOCAL nJ
+    LOCAL oGenError
+    LOCAL bNewError := {|oError| ErrorSave( oError, .T. ) }
+    LOCAL bOldError := Errorblock( bNewError )
+    LOCAl cLog
+    LOCAl lError    := .F.
+
+    IF o:lDebug
+
+       FOR n := 1 to o:nFields
+
+         BEGIN SEQUENCE
+
+             IF o:aModify[ n ]
+
+                ( o:cAlias )->( FieldPut( n, o:aBuffer[ n ] ) )
+
+                o:aModify[ n ] := .f.
+
+             ENDIF
+
+           RECOVER USING oGenError
+
+             lError := .T.
+
+             MsgStop( 'Name pos  : ' + ltrim(str(n))    + CRLF + ;
+                      'Name field: ' + o:aFldNames[ n ] + CRLF + ;
+                      'Type field: ' + ValType( (o:cAlias)->( FieldGet( n ) ) ) + CRLF + ;
+                      'Type Var  : ' + ValType( o:aBuffer[ n ] ) + CRLF + ;
+                      'Data Var  : ' + cValToChar( o:aBuffer[ n ] ) + CRLF + ;
+                      'Len Var   : ' + ltrim(str(Len( cValToChar(o:aBuffer[ n ]) ))) , 'zRdd():Save()' )
+
+         END SEQUENCE
+
+       NEXT
+
+       Errorblock( bOldError )
+
+       IF lError
+*         _ClsSetError( _GenError( nError, o:ClassName(), cMsg ) )
+       ENDIF
+
+     ELSE
+
+       FOR n := 1 to o:nFields
+          IF o:aModify[ n ]
+             ( o:cAlias )->( FieldPut( n, o:aBuffer[ n ] ) )
+             o:aModify[ n ] := .f.
+          ENDIF
+       NEXT
+
+    ENDIF
+
+    o:Commit()
+
+RETU NIL
+
+*---------------------------
+STATIC FUNCTION SaveAdo( o )
+*---------------------------
+    LOCAL n
+    LOCAL nJ
+    LOCAL oError
+    LOCAl lError    := .F.
+    LOCAL nLapsus
+    LOCAL oRs       := o:oDataSource:oRs
+    LOCAL oConn
+    LOCAL aFields   := {}
+    LOCAL aValues   := {}
+
+    TRY
+
+       IF( o:lDebug, nLapsus := Seconds(), )
+
+       FOR n := 1 to o:nFields
+          IF o:aModify[ n ]
+             oRs:Fields( n - 1 ):value := o:aBuffer[ n ]
+             o:aModify[ n ] := .f.
+          ENDIF
+       NEXT
+
+       oRs:Update()
+
+       IF( o:lDebug, MsgInfo( nLapsus, '::Save()' ), )
+
+     CATCH oError
+
+       lError := .T.
+
+       oConn := o:oDataConnection:GetoConn()
+
+       FOR EACH oError IN oConn
+           o:cError := zAdoError( oError, o:oDataSource:oAdoConnection:lMessage )
+       NEXT
+
+    END
+
+
+RETU ! lError

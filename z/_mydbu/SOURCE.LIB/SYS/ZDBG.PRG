@@ -1,0 +1,101 @@
+#include 'fivewin.ch'
+
+
+#define DBG_APP      'DBWin32.exe'
+
+#define DBG_HDLL     1
+#define DBG_FARPROC  2
+#define DBG_LOAD     3
+
+
+STATIC aDbg     := { 0, '', .F. }
+
+/*
+function main()
+
+   LOCAL nIni
+   LOCAL nI
+
+
+   ZDbgInit()
+*   ZDbgShow()
+
+   MsgInfo( 'Inici' )
+
+   nIni := Seconds()
+
+   FOR nI := 1 TO 1000
+      ZDbg( Time() )
+   NEXT
+
+   nIni := Seconds() - nIni
+   MsgInfo( nIni )
+
+   ZDbgEnd()
+
+retu nil
+*/
+
+*--------------------------
+EXIT PROCEDURE ZUnLoadLib()  ; RETU ZDbgEnd()
+*--------------------------
+
+*-------------------------
+FUNCTION ZDbgInit( lShow )
+*-------------------------
+
+   DEFAULT lShow := .t.
+
+   aDbg[ DBG_HDLL ] := LoadLibrary( "kernel32.dll" )
+
+   IF Abs( aDbg[ DBG_HDLL ] ) > 32
+      aDbg[ DBG_FARPROC ] := GetProcAdd( aDbg[ DBG_HDLL ], "OutputDebugStringA" , .T., 0,9 )
+      aDbg[ DBG_LOAD    ] := .t.
+     ELSE
+      MsgAlert( "Error code: " + Ltrim(Str(Abs( aDbg[ DBG_HDLL ] ))), "Loading Kernell.dll" )
+   ENDIF
+
+   IF lShow
+      ZDbgShow()
+   ENDIF
+
+RETU NIL
+
+*-----------------
+FUNCTION ZDbgEnd() ; RETU IF( aDbg[ DBG_LOAD ], FreeLibrary( aDbg[ DBG_HDLL ] ), .T. )
+*-----------------
+
+*-------------------------
+FUNCTION ZDbgShow( cFile )
+*-------------------------
+    LOCAL oApp     := ZApp():New()
+
+
+    DEFAULT cFile  := oApp:cDirTools + '\' + DBG_APP
+
+
+*    MsgInfo( FindWindow( 0, cPath + DBG_APP ) )
+
+    WinExec( cFile )
+
+
+RETU NIL
+
+*----------------------------
+FUNCTION ZDbg( uVal, cTitle )
+*----------------------------
+
+   DEFAULT cTitle := Alltrim(Procname(1)) + '(' + ltrim(str(Procline(1))) + ')'
+
+
+   IF aDbg[ DBG_LOAD ]
+      CallDLL( aDbg[ DBG_FARPROC ], cTitle + ' => ' + cValToChar( uVal ) + CRLF )
+   ENDIF
+
+RETU NIL
+
+
+
+*DLL32 FUNCTION OutputDebugString( cOutStr AS LPSTR ) As VOID PASCAL ;
+*  FROM "OutputDebugStringA" lib "kernel32.dll"
+

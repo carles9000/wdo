@@ -1,0 +1,252 @@
+
+   METHOD Close()           INLINE ::oRS:Close()
+   METHOD Append()
+   METHOD Delete()
+   METHOD Skip( n )
+   METHOD Structure()
+   METHOD Save( aFields, aValues )
+
+   METHOD Browse()          INLINE Ado2Dlg( ::oRs )
+
+   METHOD Clone()           INLINE FbClone():New( ::oRs, ::oAdoConnection )
+
+   ERROR HANDLER OnError( uParam1 )
+
+ENDCLASS
+
+/* oConn:State
+adStateClosed     0 The object is closed
+adStateOpen       1 The object is open
+adStateConnecting 2 The object is connecting
+adStateExecuting  4 The object is executing a command
+adStateFetching   8 The rows of the object are being retrieved
+*/
+
+
+*---------------------------------------------------------------------------
+METHOD Open( cSqlStm, nCursorType, nLockType, nOptions ) CLASS zAdoRecordSet
+*---------------------------------------------------------------------------
+   LOCAL oError
+   LOCAL oConn    := ::oAdoConnection:oConn
+   LOCAL cTxt
+   LOCAL nLapsus
+
+   IF oConn:State <> adStateOpen
+      IF oConn:lMessage
+         MsgAlert( 'Connection state: ' + ltrim(Str(oConn:State)), 'ADO Connection' )
+      ENDIF
+      RETU .F.
+   ENDIF
+
+   DEFAULT nCursorType := adOpenDynamic      // ADS Ok
+   DEFAULT nLockType   := adLockReadOnly  // adLockPessimistic  // adLockOptimistic, adLockReadOnly
+   DEFAULT nOptions    := adCmdUnknown       // && adOptionUnspecified
+
+
+*    ::oRs:ActiveConnection     := oConn
+*    ::oRs:Source               := cSqlStm
+*    ::oRs:CursorLocation       := adUseServer
+*    ::oRs:LockType             := nLockType
+*    ::oRs:CursorType           := nCursorType
+* *    oRs:CacheSize            := 100
+
+    cTxt := '::oRs:Source          ' + Chr( VK_TAB ) + cValToChar(::oRs:Source         ) + CRLF +;
+            '::oRs:CursorLocation  ' + Chr( VK_TAB ) + cValToChar(::oRs:CursorLocation ) + CRLF +;
+            '::oRs:LockType        ' + Chr( VK_TAB ) + cValToChar(::oRs:LockType       ) + CRLF +;
+            '::oRs:CursorType      ' + Chr( VK_TAB ) + cValToChar(::oRs:CursorType     ) + CRLF +;
+            '::oRs:CacheSize       ' + Chr( VK_TAB ) + cValToChar(::oRs:CacheSize       )
+
+IF( ::lDbg, msginfo( cTxt, 'Open(1)' ), )
+
+    TRY
+
+       ::oRs:CursorLocation := 3
+
+nLapsus := Seconds()
+
+       ::oRS:Open( cSqlStm, oConn, 1, 3 )
+
+nLapsus := Seconds() - nLapsus
+IF( ::lDbg, MsgInfo( nLapsus, '::Open()' ), )
+
+    cTxt := '::oRs:Source          ' + Chr( VK_TAB ) + cValToChar(::oRs:Source         ) + CRLF +;
+            '::oRs:CursorLocation  ' + Chr( VK_TAB ) + cValToChar(::oRs:CursorLocation ) + CRLF +;
+            '::oRs:LockType        ' + Chr( VK_TAB ) + cValToChar(::oRs:LockType       ) + CRLF +;
+            '::oRs:CursorType      ' + Chr( VK_TAB ) + cValToChar(::oRs:CursorType     ) + CRLF +;
+            '::oRs:CacheSize       ' + Chr( VK_TAB ) + cValToChar(::oRs:CacheSize       )
+
+IF( ::lDbg, MsgInfo( cTxt, '::Open(2)' ), )
+
+       ::Structure()
+
+     CATCH oError
+
+       FOR EACH oError IN oConn:Errors
+           ::cError := TAdoError( oError, ::oAdoConnection:lMessage )
+       NEXT
+
+       RETU .F.
+
+    END
+
+RETU .T.
+
+
+
+*--------------------------------------------------
+METHOD Save( aFields, aValues ) CLASS zAdoRecordSet
+*--------------------------------------------------
+   LOCAL nLapsus
+   LOCAL oError
+   LOCAL oConn    := ::oAdoConnection:oConn
+   LOCAL lError   := .F.
+
+   TRY
+
+       IF( ::lDbg, nLapsus := Seconds(), )
+
+         IF aFields == NIL
+            ::oRs:Update()
+           ELSE
+            ::oRs:Update( aFields, aValues )
+         ENDIF
+
+       IF( ::lDbg, MsgInfo( nLapsus, '::Save()' ), )
+
+     CATCH oError
+
+       lError := .T.
+
+       FOR EACH oError IN oConn:Errors
+           ::cError := TAdoError( oError, ::oAdoConnection:lMessage )
+       NEXT
+
+    END
+
+RETU ! lError
+
+
+*--------------------------------------------
+METHOD OnError( uParam1 ) CLASS zAdoRecordSet
+*--------------------------------------------
+   LOCAL cMsg   := __GetMessage()
+   LOCAL oField, oError
+
+   IF SubStr( cMsg, 1, 1 ) == "_"
+
+      cMsg := SubStr( cMsg, 2 )
+
+      IF ( oField := ::oRS:Fields( cMsg ) ) != NIL
+
+         TRY
+
+            oField:Value := uParam1
+
+          CATCH oError
+
+            FOR EACH oError IN ::oAdoConnection:oConn:Errors
+                ::cError := TAdoError( oError, ::oAdoConnection:lMessage )
+            NEXT
+
+            RETU NIL
+
+         END
+
+       ELSE
+         // _ClsSetError( _GenError( 1005, ::ClassName(), SubStr( cMsg, 2 ) ) )
+         RETU NIL
+      ENDIF
+
+    ELSE
+
+      IF ( oField := ::oRS:Fields( cMsg ) ) != NIL
+
+       ELSE
+         // _ClsSetError( _GenError( 1004, ::ClassName(), cMsg ) )
+         RETU NIL
+      ENDIF
+
+   ENDIF
+
+RETU oField:Value
+
+*-------------------------------------
+METHOD Structure() CLASS zAdoRecordSet
+*-------------------------------------
+    LOCAL nI
+
+    ::nFields   := ::oRs:Fields:Count
+    ::aFldNames := Array( ::nFields )
+    ::aStruct   := Array( ::nFields )
+
+    FOR nI := 1 TO ::nFields
+
+        ::aStruct  [ nI ] := { ::oRs:Fields(nI-1):Name , ;
+                               ColType( ::oRs:Fields(nI-1):Type ) , ;
+                               ::oRs:Fields(nI-1):DefinedSize ,;
+                               IF( ColType( ::oRs:Fields(nI-1):Type ) == 'N', ::oRs:Fields(nI-1):NumericScale, 0 ) }
+
+        ::aFldNames[ nI ] := ::aStruct[ nI ][ 1 ]
+
+    NEXT
+
+*       ::aFldType  := Array( nLen )
+ *      ::aModify   := Array( nLen )
+*       ::aLoad     := Array( nLen )
+*       ::aBuffer   := Array( nLen )
+
+RETU NIL
+
+//-> Funcio Adolfo
+
+STATIC FUNCTION ColType( xType )
+*-------------------------------
+   LOCAL cType:="N"
+
+   DO CASE
+      CASE xType = adArray
+           cType = "A"
+
+      CASE xType = adBSTR         .or. ;
+           xType = adChar         .or. ;
+	   xType = adVarChar      .or. ;
+	   xType = adLongVarChar  .or. ;
+ 	   xType = adWChar        .or. ;
+	   xType = adVarWChar     .or. ;
+	   xType = adLongVarWChar
+
+           cType = "C"
+
+      CASE xType = adDate .or. ;
+           xType = adDBDate
+
+           cType = "D"
+
+      CASE xType = adBoolean
+
+           cType = "L"
+
+      CASE xType = adEmpty         .or. ;
+           xType = adError         .or. ;
+           xType = adUserDefined   .or. ;
+           xType = adBinary        .or. ;
+           xType = adVarBinary     .or. ;
+           xType = adLongVarBinary .or. ;
+           xType = adIUnknown      .or. ;
+           xType = adGUID          .or. ;
+           xType = adVariant       .or. ;
+           xType = adIDispatch     .or. ;
+           xType = adIUnknown      .or. ;
+           xType = adGUID          .or. ;
+           xType = adChapter       .or. ;
+           xType = adFileTime      .or. ;
+           xType = adPropVariant
+
+           cType = "U"
+
+   ENDCASE
+
+RETU cType
+
+
+

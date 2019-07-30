@@ -12,22 +12,24 @@ CLASS WDO
 	DATA  cType
 	
 	DATA  oDb
-	DATA  cRdbms
-	DATA  cRdbms 		
+	DATA  cRdbms						INIT ''	
 	DATA  cServer		
 	DATA  cUserName	
 	DATA  cPassword 	
 	DATA  cDatabase 	
 	DATA  nPort
 	
-	DATA  cRdd		
+	DATA  cRdd							INIT ''
 	DATA  cDbf		
 	DATA  cCdx		
 
 	
+	METHOD Rdd( cDbf, cCdx )													CONSTRUCTOR
 	METHOD Rdbms( cRdbms, cServer, cUsername, cPassword, cDatabase, nPort ) 	CONSTRUCTOR
-	METHOD Rdd( cRdbms, cDbf, cCdx )												CONSTRUCTOR
 			
+	
+	METHOD SetPathData( cPath )				INLINE ::oDb:cPath := cPath
+	METHOD GetPathData()						INLINE ::oDb:cPath 
 	
 	METHOD Connect()
 
@@ -37,19 +39,21 @@ CLASS WDO
 
 ENDCLASS
 
-METHOD Rdd( cRdd, cDbf, cCdx ) CLASS WDO
+METHOD Rdd( cDbf, cCdx ) CLASS WDO
 
-	hb_default( @cRdd , 'DBFCDX' )
 	hb_default( @cDbf, '' )
 	hb_default( @cCdx, '' )
 	
 	::cType 		:= 'DBF'
-	
-	::cRdd 			:= Upper( cRdd )
+
 	::cDbf			:= cDbf
 	::cCdx			:= cCdx	
+	
+	::oDb 			:= RDBMS_Dbf():New( ::cDbf, ::cCdx )
+	
+	? 'New Ok'
 
-RETU Self
+RETU SELF
 
 
 METHOD Rdbms( cRdbms, cServer, cUsername, cPassword, cDatabase, nPort ) CLASS WDO
@@ -80,19 +84,18 @@ RETU SELF
 
 METHOD Connect() CLASS WDO
 
-	? '<hr>Connect ' + ::cRdbms 
-	
+/*	
 	DO CASE
 		CASE ::cType == 'DBF'		; ::oDb := RDBMS_Dbf():New( ::cRdd, ::cDbf, ::cCdx )
 		CASE ::cType == 'RDBMS'		; ::oDb := RDBMS_MySql():New( ::cServer, ::cUsername, ::cPassword, ::cDatabase, ::nPort )
 	ENDCASE
-
+*/
 
 RETU NIL
 
 
 METHOD Close() CLASS WDO
 
-	AP_RPUTS( '<hr>WDO Close()' )
+	? '<hr>WDO Close()' 
 
 RETU SELF
