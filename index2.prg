@@ -17,7 +17,7 @@ FUNCTION Main()
 			o:cPath 	:= hb_getenv( 'PRGPATH' ) + '/data'
 			o:cRdd 	:= 'DBFCDX'
 			
-			?? 'Version WDO', o:ClassName(), o:Version()
+			?? '<b>Version WDO</b>', o:ClassName(), o:Version()
 		
 		
 	//	Uso de tabla Dbf...

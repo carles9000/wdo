@@ -7,7 +7,7 @@
 	
 #define RDBMS_VERSION  					'0.1a'
 
-#define _SET_AUTOPEN          45
+//#define _SET_AUTOPEN          45
 	
 CLASS RDBMS_Dbf FROM RDBMS
 
@@ -49,6 +49,14 @@ CLASS RDBMS_Dbf FROM RDBMS
 	
     METHOD GoTo( n ) 						INLINE IF ( ::lOpen, (::cAlias)->( DbGoTo( n ) ), NIL )	
     METHOD Recno() 						INLINE IF ( ::lOpen, (::cAlias)->( Recno() ), -1 )	
+    METHOD Focus( cFocus ) 	
+    METHOD Seek( cSeek, lSoftSeek ) 
+    METHOD BOF()							INLINE IF ( ::lOpen, (::cAlias)->( Bof() ), NIL )	
+    METHOD EOF()							INLINE IF ( ::lOpen, (::cAlias)->( Eof() ), NIL )		
+    METHOD Deleted()						INLINE IF ( ::lOpen, (::cAlias)->( Deleted() ), NIL )		
+    METHOD Delete()						INLINE IF ( ::lOpen, (::cAlias)->( Delete() ), NIL )		
+    METHOD Append()	
+    METHOD Rlock()							
 	  
 	
 	DESTRUCTOR  Exit()					
@@ -225,6 +233,83 @@ METHOD FieldPut( ncField, uValue ) CLASS RDBMS_Dbf
 	ENDIF
 
 RETU lUpdated
+
+METHOD Focus( cTag ) CLASS RDBMS_Dbf
+
+	IF ::lOpen	
+		( ::cAlias )->( OrdSetFocus( cTag ) )	
+	ENDIF
+	
+RETU NIL
+
+METHOD Seek( cSeek, lSoftSeek ) CLASS RDBMS_Dbf
+
+	LOCAL lFound := .F.
+
+
+	hb_default( @lSoftSeek, .F. )
+
+	IF ! ::lOpen	
+		RETU .F.
+	ENDIF
+	
+	(::cAlias)->( DbGoTop() )
+	
+	lFound 	:= (::cAlias)->( DbSeek( cSeek, lSoftSeek ) )
+
+RETU lFound
+
+METHOD Append() CLASS RDBMS_Dbf
+
+    LOCAL nlapsus       := 0	
+	LOCAL nIni
+
+	IF ! ::lOpen	
+		RETU .F.
+	ENDIF	
+	
+	nIni := Seconds()
+	
+    WHILE nLapsus >= 0 
+
+       (::cAlias)->( DbAppend() )
+
+       IF !Neterr() .or. ( nLapsus == 0 )
+           EXIT
+       ENDIF
+
+       nLapsus := ::nTime - ( seconds() - nIni )
+
+    END		
+	
+RETU IF( !Neterr(), .t., .f. )
+
+METHOD RLock( xIdentidad ) CLASS RDBMS_Dbf
+
+    LOCAL nlapsus	:= 0
+	LOCAL lRlock 	:= .F.
+	LOCAL nIni
+	
+	IF ! ::lOpen	
+		RETU .F.
+	ENDIF	
+	
+	nIni := Seconds()
+	
+    WHILE nLapsus >= 0 
+
+       lRlock := (::cAlias)->( DbRlock( xIdentidad ) )
+
+       IF !Neterr() .or. ( nLapsus == 0 )
+           EXIT
+       ENDIF
+
+       nLapsus := ::nTime - ( seconds() - nIni )
+
+    END		
+	
+RETU lRlock
+
 
 METHOD Exit() CLASS RDBMS_Dbf
 
