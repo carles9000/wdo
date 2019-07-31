@@ -30,6 +30,7 @@ CLASS RDBMS_Dbf FROM RDBMS
 
 	METHOD Open()
 	METHOD Close()	
+	METHOD Reset()	
 	
 	METHOD Count()  						INLINE IF ( ::lOpen, (::cAlias)->( RecCount() ), 0 )
 	METHOD FieldPos( n )  				INLINE IF ( ::lOpen, (::cAlias)->( FieldPos( n ) ), '' )
@@ -55,9 +56,18 @@ CLASS RDBMS_Dbf FROM RDBMS
     METHOD EOF()							INLINE IF ( ::lOpen, (::cAlias)->( Eof() ), NIL )		
     METHOD Deleted()						INLINE IF ( ::lOpen, (::cAlias)->( Deleted() ), NIL )		
     METHOD Delete()						INLINE IF ( ::lOpen, (::cAlias)->( Delete() ), NIL )		
+    METHOD Recall()						INLINE IF ( ::lOpen, (::cAlias)->( DbRecall() ), NIL )		
     METHOD Append()	
     METHOD Rlock()							
-	  
+    METHOD Unlock()						INLINE IF ( ::lOpen, (::cAlias)->( DbUnlock() ), NIL )							
+    METHOD Zap()							INLINE IF ( ::lOpen, (::cAlias)->( __DbZap() ), NIL )							
+    METHOD Pack()							INLINE IF ( ::lOpen, (::cAlias)->( __DbPack() ), NIL )							
+	
+
+	//	Extended func
+	
+    METHOD Info()							
+	
 	
 	DESTRUCTOR  Exit()					
 
@@ -179,14 +189,21 @@ METHOD Open() CLASS RDBMS_Dbf
 RETU NIL
 
 
+METHOD Reset() CLASS RDBMS_Dbf
+
+	::cAlias := ''
+	::lOpen  := .f.
+	
+RETU NIL
+
 METHOD Close() CLASS RDBMS_Dbf
 
     IF ::lOpen
        IF Select( ::cAlias ) > 0
          (::cAlias)->( DbCloseArea() )
        ENDIF
-       ::cAlias := ''
-       ::lOpen  := .f.
+	   
+	   ::Reset()	   	   
     ENDIF
 
 RETU NIL
@@ -309,6 +326,56 @@ METHOD RLock( xIdentidad ) CLASS RDBMS_Dbf
     END		
 	
 RETU lRlock
+
+METHOD Info() CLASS RDBMS_Dbf
+
+	LOCAL cHtml 	:= ''
+	LOCAL cKey 	:= ''
+	LOCAL n 		:= 1
+
+	cHtml := '<h3>Info Table</h3>'	
+	
+	cHtml := '<style>'
+	cHtml += '#routes tr:hover {background-color: #ddd;}'
+	cHtml += '#routes tr:nth-child(even){background-color: #e0e6ff;}'
+	cHtml += '#routes { font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;border-collapse: collapse; width: 100%; }'
+	cHtml += '#routes thead { background-color: #425ecf;color: white;}'
+	cHtml += '</style>'
+	cHtml += '<table id="routes" border="1" cellpadding="3" >'
+	cHtml += '<thead ><tr><td align="center">Info</td><td>Description</td></tr></thead>'
+	cHtml += '<tbody >'
+	
+	cHtml += '<tr><td><b>' + 'Dbf' 		+ '<b></td><td>' + ::cDbf + '</td></tr>'
+	cHtml += '<tr><td><b>' + 'Index' 		+ '<b></td><td>' + ::cIndex + '</td></tr>'
+	cHtml += '<tr><td><b>' + 'RecCount' 	+ '<b></td><td>' + ltrim(str(::Count())) + '</td></tr>'
+	
+	WHILE ( ! empty( cKey := (::cAlias)->( OrdKey( n ) ) ) )
+	
+		cHtml += '<tr><td><b>' + 'Tag ' + ltrim(str(n))  	+ '<b></td><td>' + cKey + '</td></tr>'
+	
+		n++
+	
+	END
+
+/*	
+	FOR n := 1 TO nLen 		
+		cHtml += '<tr>'
+		cHtml += '<td align="center">' + ltrim(str(aMapSort[n][ MAP_ORDER ])) + '</td>'
+		cHtml += '<td align="center">' + aMapSort[n][ MAP_METHOD ] + '</td>'
+		cHtml += '<td>' + aMapSort[n][ MAP_ID ] + '</td>'
+		cHtml += '<td>' + aMapSort[n][ MAP_ROUTE ] + '</td>'
+		cHtml += '<td>' + aMapSort[n][ MAP_CONTROLLER ] + '</td>'
+		cHtml += '<td>' + aMapSort[n][ MAP_QUERY ] + '</td>'
+		cHtml += '<td>' + valtochar(aMapSort[n][ MAP_PARAMS ]) + '</td>'
+		cHtml += '</tr>'
+	NEXT		
+*/	
+	cHtml += '</tbody></table><hr>'
+	
+	?? cHtml
+
+
+RETU NIL
 
 
 METHOD Exit() CLASS RDBMS_Dbf

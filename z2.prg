@@ -23,17 +23,18 @@ espere
 function main()
 	LOCAL cFileCdx 	:= hb_getenv( 'PRGPATH' ) + '/data/test.cdx'	
 
-/*
+
 	LOCAL cFile 	:= hb_getenv( 'PRGPATH' ) + '/data/test.dbf'	
 	Local aStruct 	:= {;
 						 {"id", "+", 10, 0},;
 						 {"updated", "=", 8, 0},;
-						 {"first", 'C', 40, 0 };
+						 {"first", 'C', 40, 0 },;
+						 {"age", 'N', 3, 0 };
 						}   
   
   
   dbcreate( cFile, aStruct)	
-  */
+
   
   ? time(), 'Done !'
   
@@ -60,6 +61,7 @@ function main()
 				? o:lExclusive
 				INDEX ON id TO id
 				(o:cAlias)->( ORDCREATE( , "ID", "id" ) )
+				(o:cAlias)->( ORDCREATE( , "FIRST", "first" ) )
 				
 				SET INDEX TO (cFileCdx)
 				? 'Indexado...'						

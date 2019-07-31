@@ -20,5 +20,15 @@ RETU RDBMS_Dbf():New( cDbf, cCdx, lOpen )
 
 METHOD Rdbms( cRdbms, cServer, cUsername, cPassword, cDatabase, nPort ) CLASS WDO
 
-RETU NIL
+	LOCAL oDb
+
+	hb_default( @cRdbms, '' )
+	
+	cRdbms := upper( cRdbms )				
+
+	DO CASE
+		CASE cRdbms == 'MYSQL'; 	oDb := RDBMS_MySql():New( cServer, cUsername, cPassword, cDatabase, nPort )
+	ENDCASE
+
+RETU oDb
 
