@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 01-08-2019 a las 08:17:34
+-- Tiempo de generación: 01-08-2019 a las 11:09:22
 -- Versión del servidor: 10.1.31-MariaDB
 -- Versión de PHP: 7.2.3
 
@@ -19,8 +19,20 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Base de datos: `dummy`
+-- Base de datos: `dbharbour`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `menus`
+--
+
+CREATE TABLE `menus` (
+  `GLYPH` varchar(20) DEFAULT NULL,
+  `PROMPT` varchar(30) DEFAULT NULL,
+  `ACTION` varchar(50) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -66,6 +78,25 @@ INSERT INTO `sellers` (`code`, `first`, `last`, `address1`, `address2`, `city`, 
 ('SIMPSON', 'Simpson', 'Cafee', '32736 Meadowbrook Drive', 'Meadowbrook Drive', 'Nedlands', '38179-3789', 987397183, 'simpson@hotmail.com'),
 ('TOM', 'Tom', 'Logan', '6180 Roselle Street', 'Roselle Street', 'West Covina', '82378-0904', 409087328, 'tom@hotmail.com'),
 ('VINCENT', 'Vincent', 'Woiska', '13093 4th Street', '4th Street', 'Jackson', '28063-0466', 664036082, 'vincent@hotmail.com');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `users`
+--
+
+CREATE TABLE `users` (
+  `name` varchar(30) NOT NULL DEFAULT '',
+  `age` int(2) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Volcado de datos para la tabla `users`
+--
+
+INSERT INTO `users` (`name`, `age`) VALUES
+('Homer Simpson', 47),
+('Peter Pan', 52);
 
 --
 -- Índices para tablas volcadas
