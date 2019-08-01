@@ -12,6 +12,7 @@ FUNCTION Main()
 	
 		o := WDO():Rdbms( 'MYSQL', "localhost", "harbour", "password", "db_zzz", 3306 )
 
+		? "<b>==> Test Error de conexion...</b><br>"
 		
 		IF o:lConnect
 		
