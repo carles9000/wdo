@@ -10,6 +10,8 @@ FUNCTION Main()
 
 	LOCAL o
 	
+		? "<b>==> Test Error de conexion...</b><br>"
+	
 		o := WDO():Dbf( 'customer.dbf' )
 
 		

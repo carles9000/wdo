@@ -19,4 +19,5 @@
 #include "rdbms.prg" 				//	Base RDBMS
 #include "rdbms_mysql.prg" 			//	MySql
 #include "rdbms_dbf.prg" 			//	Dbf
+#include "tmodel.prg" 				//	Clase TModel
 //	---------------------------------------------------------------------------- //

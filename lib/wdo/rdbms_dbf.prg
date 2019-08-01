@@ -19,6 +19,8 @@ CLASS RDBMS_Dbf FROM RDBMS
 	DATA lExclusive						INIT .F.
 	DATA lRead								INIT .F.
 	DATA lOpen								INIT .F.
+	DATA lConnect							INIT .F.
+	DATA cError 							INIT ''	
 	DATA bExit								//INIT {|| AP_RPUTS( '<h3>Destructor Class...</h3>' )}
 	
 		
@@ -238,25 +240,19 @@ METHOD FieldPut( ncField, uValue ) CLASS RDBMS_Dbf
 	IF !::lOpen	
 		RETU .F.
 	ENDIF				
-
-	IF (::cAlias)->(RLock()) 
 	
-		If ValType( ncField ) == "C"
-			cField := ::FieldPos( ncField )
-		ELSE
-			cField := ncField 
-		ENDIF				
-		
-		(::cAlias)->( FieldPut( cField, uValue ) )
-
-		(::cAlias)->( DbUnLock() )
-		
-		lUpdated := .T.
-		
+	If ValType( ncField ) == "C"
+		cField := ::FieldPos( ncField )
 	ELSE
+		cField := ncField 
+	ENDIF				
 	
-		
-	ENDIF
+	(::cAlias)->( FieldPut( cField, uValue ) )
+
+	(::cAlias)->( DbUnLock() )
+	
+	lUpdated := .T.
+
 
 RETU lUpdated
 
@@ -278,8 +274,6 @@ METHOD Seek( cSeek, lSoftSeek ) CLASS RDBMS_Dbf
 	IF ! ::lOpen	
 		RETU .F.
 	ENDIF
-	
-	(::cAlias)->( DbGoTop() )
 	
 	lFound 	:= (::cAlias)->( DbSeek( cSeek, lSoftSeek ) )
 
