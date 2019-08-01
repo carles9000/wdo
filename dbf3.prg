@@ -1,49 +1,48 @@
-//	--------------------------------------------------------------
+//	------------------------------------------------------------------------------
 //	Title......: WDO Web Database Objects
 //	Description: Test WDO
 //	Date.......: 28/07/2019
 //
-//	{% LoadHRB( '/lib/wdo/wdo_lib.hrb' ) %}	//	Loading WDO lib
-//	--------------------------------------------------------------
+//	{% LoadHRB( '/lib/wdo/wdo_lib.hrb' ) %}				//	Loading WDO lib
+//	------------------------------------------------------------------------------
 
 FUNCTION Main()
 
 	LOCAL o
+	LOCAL oDb1
 	
+	?? 'Init ' + time() + '<hr>'
+
 	
-	//	Parametrizacón para todos los objetos que crearemos. CLASSDATA
+	//	Config Sistema...
 	
 		o := WDO():Dbf()
-			o:cPath 	:= hb_getenv( 'PRGPATH' ) + '/data'
-			o:cRdd 	:= 'DBFCDX'
-			
-			?? '<b>Version WDO</b>', o:ClassName(), o:Version(), '<hr>'
-		
-		
-	//	Uso de tabla Dbf...
-		
-		o := WDO():Dbf( 'custo.dbf', 'custo.cdx' )		
-		
-			o:Focus( 'state' )
-			o:Seek( 'LA' )			//	KS, LA, MA,...
+			o:cDefaultPath 	:= hb_getenv( 'PRGPATH' ) + '/data'				
+			o:cDefaultRdd 		:= 'DBFCDX'
+
+	//	Open Tables
 	
-			Test( o, 'state', 'LA' )
+		oDb1 := WDO():Dbf( 'custo.dbf', 'custo.cdx' )				
+
+			oDb1:Focus( 'state' )
+			oDb1:Seek( 'LA' )			//	KS, LA, MA,...
+	
+			Test( oDb1, 'state', 'LA' )
 			
 			? '<hr>'
 			
-			o:Focus( 'first' )
-			o:Seek( 'Sandy' )			//	
+			oDb1:Focus( 'first' )
+			oDb1:Seek( 'Sandy' )			//	
 	
-			Test( o, 'first', 'Sandy' )	
+			Test( oDb1, 'first', 'Sandy' )	
 
 			? '<hr>'
 			
-			o:Focus( 'zip' )
-			o:Seek( '68428-0759' )			//	
+			oDb1:Focus( 'zip' )
+			oDb1:Seek( '68428-0759' )			//	
 	
-			Test( o, 'zip', '68428-0759' )					
-			
-		
+			Test( oDb1, 'zip', '68428-0759' )			
+
 RETU NIL
 
 FUNCTION Test( o, cField, uValue )

@@ -6,8 +6,10 @@
 	--------------------------------------------------------- */
 #include "hbdyn.ch"
 
-#define HB_VERSION_BITWIDTH  17
-#define NULL  0  
+#define VERSION_RDBMS_MYSQL			'0.1a'
+#define HB_VERSION_BITWIDTH  				17
+#define NULL  								0  
+
 
 	
 CLASS RDBMS_MySql FROM RDBMS
@@ -15,17 +17,22 @@ CLASS RDBMS_MySql FROM RDBMS
 	DATA pLib
 	DATA hMySql
 	DATA hConnection
-	DATA aFields 							INIT {}
-
-	METHOD New() 							CONSTRUCTOR
+	DATA lConnect								INIT .F.
+	DATA cError 								INIT ''
+	DATA aFields 								INIT {}
+	DATA aLog 									INIT {}
 	
-	METHOD Query( cSql )
-	METHOD Count( hRes )					INLINE ::mysql_num_rows( hRes )
-	METHOD FCount( hRes )					INLINE ::mysql_num_fields( hRes )
-	METHOD DbStruct()						
-	METHOD Fetch( hRes )
-	METHOD Fetch_Assoc( hRes )	
-	METHOD Free_Result( hRes )			INLINE ::mysql_free_result( hRes )	
+	METHOD New() 								CONSTRUCTOR
+		
+	METHOD Query( cSql )	
+	METHOD Count( hRes )						INLINE ::mysql_num_rows( hRes )
+	METHOD FCount( hRes )						INLINE ::mysql_num_fields( hRes )
+	METHOD LoadStruct()					
+	METHOD DbStruct()							INLINE ::aFields
+	METHOD Fetch( hRes )	
+	METHOD Fetch_Assoc( hRes )		
+	METHOD FetchAll( hRes, lAssociative )
+	METHOD Free_Result( hRes )				INLINE ::mysql_free_result( hRes )	
 	
 	
 	//	Wrappers (Antonio Linares)
@@ -41,6 +48,8 @@ CLASS RDBMS_MySql FROM RDBMS
 	METHOD mysql_fetch_field( hRes )
 	METHOD mysql_fetch_row( hRes )
 	METHOD mysql_free_result( hRes )	
+	
+	METHOD Version()							INLINE VERSION_RDBMS_MYSQL
 
 		
 	
@@ -49,7 +58,7 @@ CLASS RDBMS_MySql FROM RDBMS
 
 ENDCLASS
 
-METHOD New( cRdbms, cServer, cUsername, cPassword, cDatabase, nPort ) CLASS RDBMS_MySql
+METHOD New( cServer, cUsername, cPassword, cDatabase, nPort ) CLASS RDBMS_MySql
 
 	hb_default( @cServer, '' )
 	hb_default( @cUserName, '' )
@@ -62,39 +71,41 @@ METHOD New( cRdbms, cServer, cUsername, cPassword, cDatabase, nPort ) CLASS RDBM
 	::cPassword 	:= cPassword
 	::cDatabase 	:= cDatabase
 	::nPort 		:= nPort	
-
-	? hb_SysMySQL()
 	
-	::pLib 	:= hb_LibLoad( hb_SysMySQL() )
+	//	Cargamos lib mysql
 	
+		::pLib 	:= hb_LibLoad( hb_SysMySQL() )	
 
-
-    If ValType( ::pLib ) == "P" 
-		? "(MySQL library properly loaded)"
-	ELSE
-		? "Error (MySQL library not found)" 
-		RETU NIL
-	ENDIF
-
-
-    ::hMySQL = ::mysql_init()
+		If ValType( ::pLib ) <> "P" 
+			::cError := "Error (MySQL library not found)" 
+			RETU Self
+		ENDIF
 	
-	IF ::hMySQL != 0 
-		? "hMySQL = " + Str( ::hMySQL ) + " (MySQL library properly initalized)"
-	ELSE
-		? "hMySQL = " + Str( ::hMySQL ) + " (MySQL library failed to initialize)"
-		RETU NIL
-	ENDIF
+	//	Inicializamos mysql
+
+		::hMySQL = ::mysql_init()
 	
-    ? "MySQL version: " + ::mysql_get_server_info()  	
-
+		IF ::hMySQL = 0 
+			::cError := "hMySQL = " + Str( ::hMySQL ) + " (MySQL library failed to initialize)"
+			RETU Self
+		ENDIF
+		
+	//	Server Info
 	
-      ? "Connection = "
-      ?? ::hConnection := ::mysql_real_connect( "localhost", "harbour", "password", "dbHarbour", 3306 )
-      ?? If( ::hConnection != ::hMySQL, " (Failed connection)", " (Successfull connection)" )
-    ?  If( ::hConnection != ::hMySQL, "Error: " + ::mysql_error(), "" )	
+		// "MySQL version: " + ::mysql_get_server_info()  	
 
-
+		
+	//	Conexion a Base de datos	
+		
+		::hConnection := ::mysql_real_connect( ::cServer, ::cUserName, ::cPassword, ::cDatabase, ::nPort )
+		
+		IF  ::hConnection != ::hMySQL
+			::cError := "Connection = (Failed connection) " + ::mysql_error()
+			RETU Self
+		ENDIF
+		
+		::lConnect := .T.
+		
 RETU SELF
 
 METHOD Query( cQuery ) CLASS RDBMS_MySql
@@ -107,20 +118,21 @@ METHOD Query( cQuery ) CLASS RDBMS_MySql
 	ENDIF	
 	
     nRetVal := ::mysql_query( cQuery )
-	
-      ? "MySQL query " + If( nRetVal == 0, "succeeded", "failed" )
-      if nRetVal != 0
-         ? "error: " + Str( nRetVal )
-      endif
-	  
+
 	IF nRetVal == 0 
 		hRes = ::mysql_store_result()
-		::DbStruct( hRes )
+
+		IF hRes != 0					//	Si Update/Delete hRes == 0
+			::LoadStruct( hRes )
+		ENDIF
+
+	ELSE
+		::cError := 'Error: ' + ::mysql_error()
 	ENDIF
    
 RETU hRes
 
-METHOD DbStruct( hRes ) CLASS RDBMS_MySql
+METHOD LoadStruct( hRes ) CLASS RDBMS_MySql
 
 	LOCAL n, hField	
      
@@ -172,7 +184,7 @@ METHOD Fetch( hRes ) CLASS RDBMS_MySql
 		
 	endif
 	
-	::mysql_free_result( hRes )
+	//::mysql_free_result( hRes )
 
 RETU aReg
 
@@ -191,9 +203,40 @@ METHOD Fetch_Assoc( hRes ) CLASS RDBMS_MySql
 		
 	endif
 	
-	::mysql_free_result( hRes )
+	//::mysql_free_result( hRes )
 
 RETU hReg
+
+METHOD FetchAll( hRes, lAssociative ) CLASS RDBMS_MySql
+
+	LOCAL oRs
+	LOCAL aData := {}
+	
+	__defaultNIL( @lAssociative, .f. )
+	
+	IF lAssociative 
+	
+		WHILE ( !empty( oRs := ::Fetch_Assoc( hRes ) ) )
+		
+			Aadd( aData, oRs )
+		
+		END
+		
+	ELSE
+	
+		WHILE ( !empty( oRs := ::Fetch( hRes ) ) )
+		
+			Aadd( aData, oRs )
+			
+		END
+		
+	ENDIF
+	
+	
+RETU aData
+
+
+//	Wrappers...
 
 METHOD mysql_num_rows( hRes ) CLASS RDBMS_MySql	
 
@@ -281,7 +324,7 @@ RETU hb_DynCall( { "mysql_free_result", ::pLib,;
 METHOD Exit() CLASS RDBMS_MySql
 
     IF ValType( ::pLib ) == "P"
-      ? "MySQL library properly freed: ", HB_LibFree( ::pLib )
+		//? "MySQL library properly freed: ", HB_LibFree( ::pLib )
     ENDIF 
 	
 RETU NIL

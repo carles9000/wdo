@@ -5,7 +5,7 @@
 	Date:......: 26/07/2019
 	--------------------------------------------------------- */ 
 	
-#define RDBMS_VERSION  					'0.1a'
+#define VERSION_RDBMS_DBF			'0.1a'
 
 //#define _SET_AUTOPEN          45
 	
@@ -14,14 +14,16 @@ CLASS RDBMS_Dbf FROM RDBMS
 
 	DATA cAlias 							INIT ''
 	DATA cError 							INIT ''
+	DATA cPath 								INIT ''
+	DATA cRdd 								INIT ''
 	DATA lExclusive						INIT .F.
 	DATA lRead								INIT .F.
 	DATA lOpen								INIT .F.
 	DATA bExit								//INIT {|| AP_RPUTS( '<h3>Destructor Class...</h3>' )}
 	
 		
-	CLASSDATA cPath 						INIT hb_getenv( 'PRGPATH' )
-	CLASSDATA cRdd 							INIT 'DBFCDX'
+	CLASSDATA cDefaultPath 				INIT hb_getenv( 'PRGPATH' )
+	CLASSDATA cDefaultRdd 					INIT 'DBFCDX'
 	CLASSDATA nTime							INIT 10
 	
 	METHOD New() 							CONSTRUCTOR
@@ -44,7 +46,7 @@ CLASS RDBMS_Dbf FROM RDBMS
     METHOD Last() 							INLINE IF ( ::lOpen, (::cAlias)->( DbGoBottom() ), NIL )
 	
 	METHOD SetError( cError )		
-	METHOD Version()						INLINE RDBMS_VERSION		
+	METHOD Version()						INLINE VERSION_RDBMS_DBF
 	
 	//	Particular methods...
 	
@@ -62,7 +64,7 @@ CLASS RDBMS_Dbf FROM RDBMS
     METHOD Unlock()						INLINE IF ( ::lOpen, (::cAlias)->( DbUnlock() ), NIL )							
     METHOD Zap()							INLINE IF ( ::lOpen, (::cAlias)->( __DbZap() ), NIL )							
     METHOD Pack()							INLINE IF ( ::lOpen, (::cAlias)->( __DbPack() ), NIL )							
-	
+   
 
 	//	Extended func
 	
@@ -82,6 +84,9 @@ METHOD New( cDbf, cIndex, lOpen ) CLASS RDBMS_Dbf
 	::cDbf		:= cDbf
 	::cIndex	:= cIndex	
 	
+	::cPath 	:= ::cDefaultPath
+	::cRdd 		:= ::cDefaultRdd	
+	
 	IF lOpen .AND. !empty( ::cDbf )
 	
 		::Open()
@@ -100,7 +105,7 @@ METHOD Open() CLASS RDBMS_Dbf
     LOCAL bError   	:= Errorblock({ |o| ErrorHandler(o) })	
 	LOCAL cFileDbf 	:= ''
 	LOCAL cFileCdx 	:= ''
-	LOCAL lAutoOpen	:= Set( _SET_AUTOPEN, .F. )	//	SET AUTOPEN OFF
+	LOCAL lAutoOpen	:= Set( _SET_AUTOPEN, .F. )	//	SET AUTOPEN OFF			
 	
 	//	Check files...
 
@@ -134,7 +139,9 @@ METHOD Open() CLASS RDBMS_Dbf
 	
 		nIni  		:= Seconds()
 		
+
 		BEGIN SEQUENCE
+
 
 			  WHILE nLapsus >= 0
 
@@ -142,8 +149,9 @@ METHOD Open() CLASS RDBMS_Dbf
 					::cAlias := NewAlias()
 				 ENDIF
 
-				 DbUseArea( .T., ::cRDD, cFileDbf, ::cAlias, ! ::lExclusive, ::lRead )
 
+				 DbUseArea( .T., ::cRDD, cFileDbf, ::cAlias, ! ::lExclusive, ::lRead )
+		
 				 IF !Neterr() .OR. ( nLapsus == 0 )
 					 EXIT
 				 ENDIF
@@ -157,17 +165,19 @@ METHOD Open() CLASS RDBMS_Dbf
 
 			  END
 
+		
 			  IF NetErr()
 				 ::SetError( 'Error de apertura de: ' + cFileDbf )
 				ELSE
 				 ::cAlias := Alias()
 				 ::lOpen  := .t.
-				 
+ 				 
 				 IF !empty( cFileCdx )
 					SET INDEX TO (cFileCdx )			 			 
 				 ENDIF
 				 
 			  ENDIF
+	
 
 		   RECOVER USING oError	
 
@@ -178,13 +188,12 @@ METHOD Open() CLASS RDBMS_Dbf
 				::SetError( cError )			
 
 	   END SEQUENCE	
-	   
+	
 	   
 	// Restore handler 		   
 
 		ErrorBlock( bError )   
 		Set( _SET_AUTOPEN, lAutoOpen )		
-			
 	
 RETU NIL
 

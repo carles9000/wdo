@@ -14,8 +14,7 @@ FUNCTION Main()
 	//	Parametrizacón para todos los objetos que crearemos. CLASSDATA
 	
 		o := WDO():Dbf()
-			o:cPath 	:= hb_getenv( 'PRGPATH' ) + '/data'
-			o:cRdd 		:= 'DBFCDX'
+			o:cDefaultPath 	:= hb_getenv( 'PRGPATH' ) + '/data'
 			
 			?? '<b>Version WDO</b>', o:ClassName(), o:Version(), '<hr>'
 		
