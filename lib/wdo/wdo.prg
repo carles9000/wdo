@@ -11,7 +11,6 @@ CLASS WDO
 
 	METHOD Dbf( cDbf, cCdx )															CONSTRUCTOR
 	METHOD Rdbms( cRdbms, cServer, cUsername, cPassword, cDatabase, nPort ) 	CONSTRUCTOR					
-
 	
 ENDCLASS
 

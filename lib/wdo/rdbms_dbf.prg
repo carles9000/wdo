@@ -249,8 +249,7 @@ METHOD FieldPut( ncField, uValue ) CLASS RDBMS_Dbf
 	
 	(::cAlias)->( FieldPut( cField, uValue ) )
 
-	(::cAlias)->( DbUnLock() )
-	
+
 	lUpdated := .T.
 
 
