@@ -5,7 +5,8 @@ Módulo para trabajar con Bases de Datos / Dbf en mod_harbour
 
 Instalar la última version del mod_harbour y dll de mysql en su carpeta correspondiente. 
 
-Para las pruebas de mysql necesitas crear en tu mysql la base de datos dbharbour
+Para las pruebas de mysql necesitas crear en tu mysql la base de datos dbharbour tal como
+se indican en mod_harbour
 
 user: harbour
 password: password

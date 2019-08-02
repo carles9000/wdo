@@ -14,26 +14,23 @@ FUNCTION Main()
 
 	? valtochar( oUsers:Row() )
 	
-	IF  oUsers:getId( 5 )
-		
-		? 'Found !'
-		
-	ELSE
-	
-		? 'Not found'
-		
+	IF  oUsers:getId( 5 )		
+		? '<br>Found !'		
+	ELSE	
+		? 'Not found'		
 	ENDIF
 	
 	hReg := oUsers:Row()
 	
-	? '<b>Row =></b>', valtoChar( hReg )
+	? '<br><b>Row =></b>', valtoChar( hReg )	
 	
-	
-	? 'Name: ' , hReg[ 'name' ]
+	? '<br>Name: ' , hReg[ 'name' ]
 	
 	? '<hr>'
 	
-	aRows := oUsers:GetDpt( 'TIC' ) 
+	? '<br><b>List Dpt == TIC</b></br>'
+	
+	aRows := oUsers:GetDpt( 'TIC' ) 	
 	
 	FOR nI := 1 TO Len( aRows )
 		? valtochar( aRows[nI] )

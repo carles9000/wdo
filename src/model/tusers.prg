@@ -1,7 +1,7 @@
 #include "hbclass.ch" 
 #include "hboo.ch" 
 
-CLASS TUsers FROM TModel
+CLASS TUsers FROM TDataset
 
     METHOD  New() CONSTRUCTOR			
    
