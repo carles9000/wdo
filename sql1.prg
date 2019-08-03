@@ -29,14 +29,14 @@ FUNCTION Main()
 				next			
 				
 				? '<br><b>Data</b>'
-				while ( !empty( a := o:Fetch( hRes ) ) )
-					? valtochar( a )
-				end
+				//while ( !empty( a := o:Fetch( hRes ) ) )
+				//	? valtochar( a )
+				//end
 				
 				//	Associative array
-				//while ( !empty( a := o:Fetch_Assoc( hRes ) ) )
-				//	? valtochar( a )
-				//end	
+				while ( !empty( a := o:Fetch_Assoc( hRes ) ) )
+					? valtochar( a )
+				end	
 		
 			ELSE
 			
