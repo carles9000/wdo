@@ -358,6 +358,7 @@ function hb_SysMySQL()
 
    local cLibName
 
+   
    if ! "Windows" $ OS()
       if "Darwin" $ OS()
          cLibName = "/usr/local/Cellar/mysql/8.0.16/lib/libmysqlclient.dylib"
@@ -367,9 +368,25 @@ function hb_SysMySQL()
                         "/usr/lib/x86-linux-gnu/libmysqlclient.so" )
       endif                  
    else
-      cLibName = If( hb_version( HB_VERSION_BITWIDTH ) == 64,;
-                     "c:/Apache24/htdocs/libmysql64.dll",;
-                     "c:/xampp/htdocs/libmysql.dll" )
+
+		IF hb_version( HB_VERSION_BITWIDTH ) == 64
+		
+			IF !Empty( HB_GetEnv( 'WDO_PATH_MYSQL' ) )
+				cLibName = HB_GetEnv( 'WDO_PATH_MYSQL' ) + 'libmysql64.dll'
+			ELSE
+				cLibName = "c:/Apache24/htdocs/libmysql64.dll"
+			ENDIF
+		
+		ELSE
+		
+			IF !Empty( HB_GetEnv( 'WDO_PATH_MYSQL' ) )
+				cLibName = HB_GetEnv( 'WDO_PATH_MYSQL' ) + 'libmysql.dll'
+			ELSE
+				cLibName = "c:/Apache24/htdocs/libmysql.dll"
+			ENDIF		
+		
+		ENDIF
+
    endif
 
 return cLibName 

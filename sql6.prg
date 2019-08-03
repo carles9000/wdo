@@ -3,8 +3,9 @@
 //	Description: Test WDO
 //	Date.......: 28/07/2019
 //
-//	{% AAdd( getList, hb_milliseconds()  ) %}	//	Ocupará el 1 elemento del array
-//	{% LoadHRB( '/lib/wdo/wdo_lib.hrb' ) %}	//	Loading WDO lib
+//	{% AAdd( getList, hb_milliseconds()  ) %}					//	Ocupará el 1 elemento del array
+//	{% LoadHRB( '/lib/wdo/wdo_lib.hrb' ) %}					//	Loading WDO lib
+//	{% HB_SetEnv( 'WDO_PATH_MYSQL', "c:/xampp/htdocs/" ) %}	//	Usuarios Xampp
 //	--------------------------------------------------------------
 
 //	Test Speed...
