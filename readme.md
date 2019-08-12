@@ -14,3 +14,8 @@ user: harbour
 password: password
 
 Instalar el fichero que crea las tablas que se encuentra carpeta \sql en vuestra base de datos dbharbour 
+
+![alt text](https://i.postimg.cc/MT9kxmWy/wdo.jpg)
+
+Ayuda -> https://github.com/carles9000/wdo/blob/master/doc/hfw_wdo.pdf 
+
