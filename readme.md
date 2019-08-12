@@ -1,4 +1,6 @@
-﻿WDO - Web Database Objects
+﻿![alt text](https://i.postimg.cc/X7cfv1MS/logo.jpg)
+
+WDO - Web Database Objects
 ==========================
 
 Módulo para trabajar con Bases de Datos / Dbf en mod_harbour
