@@ -6,42 +6,95 @@ CLASS TDataset
 	DATA cTable 
 	DATA cIndex 
 	DATA cFocus
-	DATA cPath 							INIT ''
+	DATA cPath 						INIT ''
 	DATA aFields 						INIT {=>}
 	DATA hRow 							INIT {=>}
+	
+	DATA hCfg							INIT { 'wdo' => 'DBF' }
 
 
-	METHOD  New() CONSTRUCTOR
+	METHOD  New() 						CONSTRUCTOR
 	METHOD  Open()
+	
+	METHOD  ConfigDb( hCfg )
+	
 	METHOD  AddField( cField ) 		INLINE ::aFields[ cField ] := {}
    
+	METHOD  RecCount()
 	METHOD  GetId( cId )
 	METHOD  Row()						INLINE ::hRow
 	
 	METHOD  Load()
 	METHOD  Blank()
+	METHOD  LoadPage( nRecs, nRecnoStart )
    
 ENDCLASS
 
 METHOD New() CLASS TDataset
 
+	//::hCfg[ 'wdo' ] := 'DBF'
 
 RETU SELF
 
 METHOD Open() CLASS TDataset
 
-	::oDb := WDO():Dbf( ::cTable, ::cIndex , .F. )		
+	
+	IF ::hCfg[ 'wdo' ] == 'DBF'
+
+		::oDb := WDO():Dbf( ::cTable, ::cIndex , .F. )		
+			
+		IF !empty( ::cPath )
+			::oDb:cPath := ::cPath
+		ENDIF
 		
-	IF !empty( ::cPath )
-		::oDb:cPath := ::cPath
+		::oDb:Open()
+
+		::hRow := ::Load()	
+	
+	ELSE
+	
+		::oDb := WDO():Rdbms( ::hCfg[ 'wdo' ],;
+								::hCfg[ 'server' ],;
+								::hCfg[ 'user'] ,;
+								::hCfg[ 'password' ],;
+								::hCfg[ 'database' ],;
+								::hCfg[ 'port' ] )
+								
+
+								
+	
 	ENDIF
 
-	
-	::oDb:Open()
+RETU NIL
 
-	::hRow := ::Load()
+METHOD ConfigDb( hCfg ) CLASS TDataset
+
+	::hCfg := hCfg 
 
 RETU NIL
+
+METHOD RecCount() CLASS TDataset
+
+	LOCAL cSql, oRs, hRes, o
+	LOCAL nTotal 
+
+	IF ::hCfg[ 'wdo' ] == 'DBF'
+	
+		::nTotal := ::oDb:Count()
+		
+	ELSE
+	
+		cSql 	:= 'SELECT count(*) as total FROM ' + ::cTable 
+		
+		hRes 	:= ::oDb:Query( cSql )
+		oRs  	:= ::oDb:Fetch_Assoc( hRes ) 
+		
+		nTotal	:= oRs[ 'total' ]	
+		
+	ENDIF
+	
+RETU nTotal
+
 
 METHOD getId( cId ) CLASS TDataset
 
@@ -58,35 +111,87 @@ METHOD getId( cId ) CLASS TDataset
 
 RETU lFound
 
-METHOD Load() CLASS TDataset
+METHOD Load( lAssoc ) CLASS TDataset
 
 	LOCAL nI, cField 
-	LOCAL hReg := {=>}
+	LOCAL uReg 
+	
+	__defaultNIL( @lAssoc, .T. )
+	
+	IF lAssoc 		
+		uReg := {=>}			
+	ELSE			
+		uReg := {}		
+	ENDIF	
 
 	FOR nI := 1 TO Len( ::aFields )
 		
-		cField := HB_HKeyAt( ::aFields, nI ) 			
+		cField := HB_HKeyAt( ::aFields, nI ) 	
+
+		IF lAssoc 
+
+			uReg[ cField ] :=  ::oDb:FieldGet( cField )
+			
+		ELSE
+
+			Aadd( uReg, ::oDb:FieldGet( cField ) )
 		
-		hReg[ cField ] :=  ::oDb:FieldGet( cField )
+		ENDIF
 		
 	NEXT
 
-RETU hReg
+RETU uReg
 
-METHOD Blank() CLASS TDataset
+METHOD Blank( lAssoc ) CLASS TDataset
 
 	LOCAL nI, cField 
-	LOCAL hReg := {=>}
+	LOCAL uReg 
+	
+	__defaultNIL( @lAssoc, .T. )	
 	
 	::oDb:Last()
 	::oDb:next()		//	EOF() + 1 
 
-	FOR nI := 1 TO Len( ::aFields )
-		
-		cField := HB_HKeyAt( ::aFields, nI ) 			
-		
-		hReg[ cField ] :=  ::oDb:FieldGet( cField )
-		
-	NEXT
+	uReg := ::Load( lAssoc )
 
-RETU hReg
+RETU uReg
+
+
+METHOD LoadPage( nRecs, nRecnoStart, lAssoc ) CLASS TDataset
+
+	LOCAL nI		:= 0
+	LOCAL aRows	:= {}
+	LOCAL cSql, hRes
+
+	__defaultNIL( @nRecs, 10 )
+	__defaultNIL( @nRecnoStart, 0 )
+	__defaultNIL( @lAssoc, .F. )	
+	
+	IF ::hCfg[ 'wdo' ] == 'DBF'	
+	
+		IF nRecnoStart > 0 
+			
+			::oDb:GoTo( nRecnoStart )
+		
+		ENDIF
+		
+		WHILE !::oDb:Eof() .AND. nI < nRecs 
+		
+			Aadd( aRows, ::Load( lAssoc ) )
+			
+			::oDb:Next()
+			
+			nI++
+		
+		END	
+
+	ELSE
+	
+		cSql	:= 'Select * from ' + ::cTable + ' limit ' + str(nRecnoStart) + ', ' + str(nRecs)
+	
+		hRes	:= ::oDb:Query( cSql )		
+		aRows	:= ::oDb:FetchAll( hRes )
+	
+	ENDIF
+
+RETU aRows

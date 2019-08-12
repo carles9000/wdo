@@ -8,6 +8,20 @@
 
 FUNCTION Main()
 
-	?? '<h3>Version WDO ==> ' , WDO():Version()
+	LOCAL o
+	
+		? "<b>==> Test Error de conexion...</b><br>"
+	
+		o := WDO():Dbf( 'customer.dbf' )
+		
+		IF o:lConnect
+		
+			? 'Connected !'
+			
+		ELSE
+		
+			? o:cError 
+			
+		ENDIF
 
 RETU NIL

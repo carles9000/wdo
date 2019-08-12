@@ -9,17 +9,13 @@
 
 FUNCTION Main()
 
-	LOCAL o
-	
-		? "<b>==> Test Error de conexion...</b><br>"
+	LOCAL o	
 		
-		
-		o := WDO():Rdbms( 'MYSQL', "localhost", "harbour", "password", "db_zzz", 3306 )
-
+		o := WDO():Rdbms( 'MYSQL', "localhost", "harbour", "password", "dbHarbour", 3306 )
 		
 		IF o:lConnect
 		
-			? 'Connected !', '<b>Versión RDBMS MySql', o:Version()
+			? 'Connected !', '<b>Version RDBMS MySql', o:Version()
 			
 		ELSE
 		

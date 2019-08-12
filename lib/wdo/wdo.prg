@@ -5,12 +5,15 @@
 	Date:......: 26/07/2019
 	--------------------------------------------------------- */
 	
-#define WDO_VERSION 		'0.1a'
+#define WDO_VERSION 		'0.2b'
 
 CLASS WDO	
 
 	METHOD Dbf( cDbf, cCdx )															CONSTRUCTOR
 	METHOD Rdbms( cRdbms, cServer, cUsername, cPassword, cDatabase, nPort ) 	CONSTRUCTOR					
+	
+	METHOD Version()							INLINE WDO_VERSION
+	
 	
 ENDCLASS
 
