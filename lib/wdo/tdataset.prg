@@ -100,15 +100,34 @@ METHOD getId( cId ) CLASS TDataset
 
 	LOCAL hReg 
 	LOCAL lFound := .F.
+	LOCAL cSql, hRes
 
-	::oDb:Focus( ::cFocus )
-	
-	IF ( lFound := ::oDb:Seek( cId ) )
-		::hRow := ::Load()
+	IF ::hCfg[ 'wdo' ] == 'DBF'	
+		
+		::oDb:Focus( ::cFocus )
+		
+		IF ( lFound := ::oDb:Seek( cId ) )
+			::hRow := ::Load()
+		ELSE
+			::hRow := ::Blank()
+		ENDIF	
+
 	ELSE
-		::hRow := ::Blank()
-	ENDIF	
 
+		cSql 	:= 'SELECT * FROM ' + ::cTable + ' WHERE ' + ::cFocus + ' = ' + valtochar( cId )
+
+		hRes 	:= ::oDb:Query( cSql )
+		
+		lFound	:= IF( ::oDb:Count( hRes ) > 0 , .T., .F. )
+	
+		IF lFound 
+			::hRow 	:= ::oDb:Fetch_Assoc( hRes )
+		ELSE
+			::hRow	:= ''		
+		ENDIF		
+		
+	ENDIF
+	
 RETU lFound
 
 METHOD Load( lAssoc ) CLASS TDataset
