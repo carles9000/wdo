@@ -18,4 +18,5 @@ Instalar el fichero que crea las tablas que se encuentra carpeta \sql en vuestra
 ![alt text](https://i.postimg.cc/MT9kxmWy/wdo.jpg)
 
 Ayuda -> https://github.com/carles9000/wdo/blob/master/doc/hfw_wdo.pdf 
+Help  -> https://github.com/carles9000/wdo/blob/master/doc/hfw_wdo_en.pdf 
 
