@@ -17,7 +17,8 @@
 
 #include "wdo.prg" 					//	WDO
 #include "rdbms.prg" 				//	Base RDBMS
-#include "rdbms_mysql.prg" 			//	MySql
 #include "rdbms_dbf.prg" 			//	Dbf
+#include "rdbms_mysql.prg" 			//	MySql
+//#include "rdbms_pg.prg" 			//	PostgreSql
 #include "tdataset.prg" 			//	Clase TDataset
 //	---------------------------------------------------------------------------- //

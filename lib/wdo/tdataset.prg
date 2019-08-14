@@ -36,12 +36,21 @@ METHOD New() CLASS TDataset
 
 RETU SELF
 
-METHOD Open() CLASS TDataset
+METHOD Open( lExclusive ) CLASS TDataset
+
+
+	__defaultNIL( @lExclusive, .F. )
 
 	
 	IF ::hCfg[ 'wdo' ] == 'DBF'
+	
+		IF ValType( ::oDb ) == 'O' .AND. ::oDb:lOpen
+			::hRow := ::Load()	
+			RETU NIL
+		ENDIF
 
-		::oDb := WDO():Dbf( ::cTable, ::cIndex , .F. )		
+		::oDb := WDO():Dbf( ::cTable, ::cIndex , .F. )
+			::oDb:lExclusive := lExclusive
 			
 		IF !empty( ::cPath )
 			::oDb:cPath := ::cPath
