@@ -6,7 +6,7 @@ CLASS TDataset
 	DATA cTable 
 	DATA cIndex 
 	DATA cFocus
-	DATA cPath 						INIT ''
+	DATA cPath 							INIT ''
 	DATA aFields 						INIT {=>}
 	DATA hRow 							INIT {=>}
 	
@@ -18,7 +18,7 @@ CLASS TDataset
 	
 	METHOD  ConfigDb( hCfg )
 	
-	METHOD  AddField( cField ) 		INLINE ::aFields[ cField ] := {}
+	METHOD  AddField( cField ) 			INLINE ::aFields[ cField ] := {}
    
 	METHOD  RecCount()
 	METHOD  GetId( cId )

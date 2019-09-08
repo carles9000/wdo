@@ -4,8 +4,9 @@
 	Author.....: Carles Aubia Floresvi
 	Date:......: 26/07/2019
 	--------------------------------------------------------- */ 
+
 	
-#define VERSION_RDBMS_DBF			'0.1a'
+#define VERSION_RDBMS_DBF			'0.1b'
 
 //#define _SET_AUTOPEN          45
 	
@@ -59,7 +60,7 @@ CLASS RDBMS_Dbf FROM RDBMS
     METHOD BOF()							INLINE IF ( ::lOpen, (::cAlias)->( Bof() ), NIL )	
     METHOD EOF()							INLINE IF ( ::lOpen, (::cAlias)->( Eof() ), NIL )		
     METHOD Deleted()						INLINE IF ( ::lOpen, (::cAlias)->( Deleted() ), NIL )		
-    METHOD Delete()						INLINE IF ( ::lOpen, (::cAlias)->( Delete() ), NIL )		
+    METHOD Delete()						INLINE IF ( ::lOpen, (::cAlias)->( DbDelete() ), NIL )		
     METHOD Recall()						INLINE IF ( ::lOpen, (::cAlias)->( DbRecall() ), NIL )		
     METHOD Append()	
     METHOD Rlock()							
@@ -236,22 +237,24 @@ METHOD FieldPut( ncField, uValue ) CLASS RDBMS_Dbf
 
 	LOCAL lUpdated := .F.
 	LOCAL cField
-
+	
 	IF !::lOpen	
 		RETU .F.
 	ENDIF				
 	
+
 	If ValType( ncField ) == "C"
-		cField := ::FieldPos( ncField )
+
+		//cField := ::FieldPos( ncField )
+		cField := (::cAlias)->(FieldPos( ncField ) )
 	ELSE
+
 		cField := ncField 
 	ENDIF				
-	
+
 	(::cAlias)->( FieldPut( cField, uValue ) )
 
-
 	lUpdated := .T.
-
 
 RETU lUpdated
 
@@ -266,9 +269,8 @@ RETU NIL
 METHOD Seek( cSeek, lSoftSeek ) CLASS RDBMS_Dbf
 
 	LOCAL lFound := .F.
-
-
-	hb_default( @lSoftSeek, .F. )
+	
+	__defaultNIL( @lSoftSeek, .F. )	
 
 	IF ! ::lOpen	
 		RETU .F.
