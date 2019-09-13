@@ -22,16 +22,33 @@ CLASS TDataset
    
 	METHOD  RecCount()
 	METHOD  GetId( cId )
-	METHOD  Row()						INLINE ::hRow
+	
+	METHOD  Next()						
+	METHOD  Prev()
+	METHOD  Row()							INLINE ::hRow
+	METHOD  Get( cField )					INLINE ::hRow[ cField ]
+	
+	METHOD  Focus( cTag )					INLINE  ::oDb:Focus( cTag )
+	METHOD  Seek( uValue )				INLINE  IF( ::oDb:Seek( uValue ), ::Load(), ::Blank() )
+	METHOD  Eof()							INLINE  ::oDb:Eof()
 	
 	METHOD  Load()
 	METHOD  Blank()
 	METHOD  LoadPage( nRecs, nRecnoStart )
+	
+
+    ERROR HANDLER OnError( uParam1 )	
    
 ENDCLASS
 
-METHOD New() CLASS TDataset
+METHOD New( cTable, cIndex ) CLASS TDataset
 
+	__defaultNIL( @cTable, '' )
+	__defaultNIL( @cIndex, '' )
+	
+	::cTable := cTable
+	::cIndex := cIndex		
+	
 	//::hCfg[ 'wdo' ] := 'DBF'
 
 RETU SELF
@@ -74,7 +91,7 @@ METHOD Open( lExclusive ) CLASS TDataset
 	
 	ENDIF
 
-RETU NIL
+RETU ::oDb:lOpen
 
 METHOD ConfigDb( hCfg ) CLASS TDataset
 
@@ -142,14 +159,13 @@ RETU lFound
 METHOD Load( lAssoc ) CLASS TDataset
 
 	LOCAL nI, cField 
-	LOCAL uReg 
 	
 	__defaultNIL( @lAssoc, .T. )
 	
 	IF lAssoc 		
-		uReg := {=>}			
+		::hRow := {=>}			
 	ELSE			
-		uReg := {}		
+		::hRow := {}		
 	ENDIF	
 
 	FOR nI := 1 TO Len( ::aFields )
@@ -158,32 +174,46 @@ METHOD Load( lAssoc ) CLASS TDataset
 
 		IF lAssoc 
 
-			uReg[ cField ] :=  ::oDb:FieldGet( cField )
+			::hRow[ cField ] :=  ::oDb:FieldGet( cField )
 			
 		ELSE
 
-			Aadd( uReg, ::oDb:FieldGet( cField ) )
+			Aadd( ::hRow, ::oDb:FieldGet( cField ) )
 		
 		ENDIF
 		
 	NEXT
+	
 
-RETU uReg
+
+RETU ::hRow
 
 METHOD Blank( lAssoc ) CLASS TDataset
 
 	LOCAL nI, cField 
-	LOCAL uReg 
 	
 	__defaultNIL( @lAssoc, .T. )	
 	
 	::oDb:Last()
 	::oDb:next()		//	EOF() + 1 
 
-	uReg := ::Load( lAssoc )
+	::hRow := ::Load( lAssoc )
 
-RETU uReg
+RETU ::hRow
 
+METHOD Next() CLASS TDataset
+
+	::oDb:next()
+	::Load()
+
+RETU NIL
+
+METHOD Prev() CLASS TDataset
+
+	::oDb:prev()
+	::Load()
+
+RETU NIL
 
 METHOD LoadPage( nRecs, nRecnoStart, lAssoc ) CLASS TDataset
 
@@ -223,3 +253,36 @@ METHOD LoadPage( nRecs, nRecnoStart, lAssoc ) CLASS TDataset
 	ENDIF
 
 RETU aRows
+
+
+METHOD OnError( uParam1 ) CLASS TDataset
+/*
+    LOCAL nVar
+    LOCAL cMsg   := __GetMessage()
+    LOCAL nError := If( SubStr( cMsg, 1, 1 ) == "_", 1005, 1004 )
+
+    cMsg := Upper( cMsg )
+
+    IF SubStr( cMsg, 1, 1 ) == "_"    // SET
+
+//     En aquesta clase no dixarem fer una assignacio
+
+        _ClsSetError( _GenError( nError, ::ClassName(), 'No se puede asignar a ningun miembro de la clase' ) )
+
+     ELSE                           // GET
+
+       nVar := AScan( ::hRow, { |x| x[ DATA_ID ] == cMsg } )
+
+       IF nVar > 0
+
+          RETU ::aBuffer[ nVar ][ DATA_RDD ]
+
+         ELSE
+           MsgBeep()
+           MsgStop( "Taula no definida: " + cMsg , 'ZDb () - Get')
+           _ClsSetError( _GenError( nError, ::ClassName(), 'Taula no definida ' + cMsg ) )
+       ENDIF
+
+    ENDIF
+*/
+RETU NIL
