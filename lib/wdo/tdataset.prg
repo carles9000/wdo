@@ -18,7 +18,7 @@ CLASS TDataset
 	
 	METHOD  ConfigDb( hCfg )
 	
-	METHOD  AddField( cField ) 			INLINE ::aFields[ cField ] := {}
+	METHOD  AddField( cField ) 				INLINE ::aFields[ cField ] := {}
    
 	METHOD  RecCount()
 	METHOD  GetId( cId )
@@ -29,7 +29,7 @@ CLASS TDataset
 	METHOD  Get( cField )					INLINE ::hRow[ cField ]
 	
 	METHOD  Focus( cTag )					INLINE  ::oDb:Focus( cTag )
-	METHOD  Seek( uValue )				INLINE  IF( ::oDb:Seek( uValue ), ::Load(), ::Blank() )
+	METHOD  Seek( uValue )					INLINE  IF( ::oDb:Seek( uValue ), ::Load(), ::Blank() )
 	METHOD  Eof()							INLINE  ::oDb:Eof()
 	
 	METHOD  Load()

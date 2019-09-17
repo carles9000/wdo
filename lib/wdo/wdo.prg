@@ -9,8 +9,10 @@
 
 CLASS WDO	
 
-	METHOD Dbf( cDbf, cCdx )															CONSTRUCTOR
-	METHOD Rdbms( cRdbms, cServer, cUsername, cPassword, cDatabase, nPort ) 	CONSTRUCTOR					
+	METHOD Dbf( cDbf, cCdx )													CONSTRUCTOR
+	METHOD Rdbms( cRdbms, cServer, cUsername, cPassword, cDatabase, nPort ) 	CONSTRUCTOR		
+	
+	//METHOD ADO()							//	Pendiente AL
 	
 	METHOD Version()							INLINE WDO_VERSION
 	
@@ -31,7 +33,7 @@ METHOD Rdbms( cRdbms, cServer, cUsername, cPassword, cDatabase, nPort ) CLASS WD
 
 	DO CASE
 		CASE cRdbms == 'MYSQL'; 		oDb := RDBMS_MySql():New( cServer, cUsername, cPassword, cDatabase, nPort )
-		//CASE cRdbms == 'POSTGRESQL'; 	oDb := RDBMS_PG():New( cServer, cUsername, cPassword, cDatabase, nPort )
+		CASE cRdbms == 'POSTGRESQL'; 	oDb := RDBMS_PG():New( cServer, cUsername, cPassword, cDatabase, nPort )
 		//CASE cRdbms == 'SQLITE'; 	oDb := RDBMS_SQLite():New( cServer, cUsername, cPassword, cDatabase, nPort )
 	ENDCASE
 

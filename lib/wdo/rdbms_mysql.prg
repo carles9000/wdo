@@ -6,7 +6,7 @@
 	--------------------------------------------------------- */
 #include "hbdyn.ch"
 
-#define VERSION_RDBMS_MYSQL			'0.1a'
+#define VERSION_RDBMS_MYSQL					'0.1a'
 #define HB_VERSION_BITWIDTH  				17
 #define NULL  								0  
 
@@ -32,7 +32,7 @@ CLASS RDBMS_MySql FROM RDBMS
 	METHOD Fetch( hRes )	
 	METHOD Fetch_Assoc( hRes )		
 	METHOD FetchAll( hRes, lAssociative )
-	METHOD Free_Result( hRes )				INLINE ::mysql_free_result( hRes )	
+	METHOD Free_Result( hRes )					INLINE ::mysql_free_result( hRes )	
 	
 	
 	//	Wrappers (Antonio Linares)
