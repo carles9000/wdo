@@ -178,7 +178,7 @@ METHOD Query( cSql, nMaxRecords ) CLASS RDBMS_ADO
    END
 
 
-return RecordSet():New( oRs	 )
+RETU RecordSet():New( oRs	 )
 
 METHOD Close() CLASS RDBMS_ADO
 
@@ -217,7 +217,7 @@ CLASS RecordSet
 							
 	METHOD Count()							INLINE ::oRs:RecordCount()										
 	METHOD FCount( n )						INLINE ::nFields								
-	METHOD Next( lAssociative )			INLINE ( ::oRs:MoveNext(), !::oRs:Eof() )	
+	METHOD Next( lAssociative )				INLINE ( ::oRs:MoveNext(), !::oRs:Eof() )	
 	METHOD FieldName( n )					INLINE ::oRs:Fields( n - 1 ):Name 	//HB_HKeyAt( ::hRow, n )								
 	METHOD FieldGet( n )					INLINE ::oRs:Fields( n - 1 ):Value	//HB_HValueAt( ::hRow, n )								
 	METHOD Eof()							INLINE ::oRs:Eof							
