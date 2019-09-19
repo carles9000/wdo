@@ -3,6 +3,7 @@
 //	Description: Test WDO
 //	Date.......: 28/07/2019
 //
+//	{% AAdd( getList, hb_milliseconds()  ) %}	//	Ocupará el 1 elemento del array
 //	{% LoadHRB( '/lib/wdo/wdo_lib.hrb' ) %}					//	Loading WDO lib
 //	{% HB_SetEnv( 'WDO_PATH_MYSQL', "c:/xampp/htdocs/" ) %}	//	Usuarios Xampp
 //	--------------------------------------------------------------
@@ -51,3 +52,15 @@ FUNCTION Main()
 		
 RETU NIL
 
+exit procedure e
+
+	LOCAl nLap 	:= ( hb_milliseconds() - M->getList[ 1 ] )
+	LOCAL cHtml 
+	
+	cHtml 	:= '<div style="position:fixed;bottom:0px;background-color: #98cfff;">&nbsp;Lapsus milliseconds: ' 
+	cHtml  	+= '<b>' + ltrim(str( nLap )) + '</b>&nbsp;'
+	cHtml  	+= '</div>'
+	
+	? cHtml
+
+retu 
