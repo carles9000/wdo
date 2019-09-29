@@ -14,7 +14,7 @@ FUNCTION Main()
 	
 		o := WDO():ADO( hCfg, .T. )
 		
-		o:Version()
+		? o:Version()
 		
 		oRs := o:Query( 'SELECT * FROM CUSTOMER' ) 
 		

@@ -5,7 +5,7 @@
 	Date:......: 26/07/2019
 	--------------------------------------------------------- */
 	
-#define WDO_VERSION 		'ADO 0.1'
+#define WDO_VERSION 		'ADO 0.1b'
 
 CLASS WDO	
 
