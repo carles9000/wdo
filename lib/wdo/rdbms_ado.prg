@@ -5,7 +5,7 @@
 	Date:......: 17/09/2019
 	--------------------------------------------------------- */
 
-#define VERSION_RDBMS_ADO						'ADO 0.1a'
+#define VERSION_RDBMS_ADO						'ADO 0.1b'
 
 #xcommand TRY  => BEGIN SEQUENCE WITH {| oErr | Break( oErr ) }
 #xcommand CATCH [<!oErr!>] => RECOVER [USING <oErr>] <-oErr->
@@ -217,12 +217,17 @@ CLASS RecordSet
 							
 	METHOD Count()							INLINE ::oRs:RecordCount()										
 	METHOD FCount( n )						INLINE ::nFields								
-	METHOD Next( lAssociative )				INLINE ( ::oRs:MoveNext(), !::oRs:Eof() )	
+	METHOD Next( lAssociative )			INLINE ( ::oRs:MoveNext(), !::oRs:Eof() )	
 	METHOD FieldName( n )					INLINE ::oRs:Fields( n - 1 ):Name 	//HB_HKeyAt( ::hRow, n )								
 	METHOD FieldGet( n )					INLINE ::oRs:Fields( n - 1 ):Value	//HB_HValueAt( ::hRow, n )								
+	METHOD FieldPos( cFieldName ) 	
+	METHOD FieldPut( nPos, uValue ) 	
 	METHOD Eof()							INLINE ::oRs:Eof							
+	METHOD Append()						INLINE ::oRs:AddNew()
+	METHOD Recno()							INLINE ::oRs:BookMark
+	METHOD Save()							INLINE ::oRs:Update()
 
-	METHOD Row()							
+	METHOD Row( lAssociative )							
 	
 	METHOD FetchAll( lAssociative )
 	METHOD View( aData )
@@ -248,6 +253,18 @@ METHOD New( oRs ) CLASS RecordSet
 	NEXT		
 
 RETU SELF
+
+METHOD FieldPos( cField ) CLASS RecordSet
+
+	LOCAL nPos := Ascan( ::aFields, {|c| upper(c) == upper(cField) } )
+
+RETU nPos 
+
+METHOD FieldPut( nPos, uValue ) CLASS RecordSet
+
+	::oRs:Fields( nPos - 1 ):Value := uValue
+
+RETU nil
 
 METHOD Row( lAssociative ) CLASS RecordSet
 
@@ -371,10 +388,10 @@ RETU NIL
 
 
 METHOD Exit() CLASS RecordSet
-
+/*
     IF ValType( ::oRs ) == "O"
 		//? "ADO free recordset"
 		::oRs:Close()
     ENDIF 
-	
+*/	
 RETU NIL
