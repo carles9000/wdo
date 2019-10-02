@@ -7,6 +7,8 @@
 	
 #define WDO_VERSION 		'ADO 0.1b'
 
+static nFWAdoMemoSizeThreshold   := 255  // Can be changed to the taste of individual programmers
+
 CLASS WDO	
 
 	METHOD Dbf( cDbf, cCdx )													CONSTRUCTOR
