@@ -13,7 +13,9 @@ CLASS WDO
 
 	METHOD Dbf( cDbf, cCdx )													CONSTRUCTOR
 	METHOD Rdbms( cRdbms, cServer, cUsername, cPassword, cDatabase, nPort ) 	CONSTRUCTOR			
-	METHOD ADO( cServer, cUsername, cPassword, cDatabase, lAutoOpen )																CONSTRUCTOR
+#ifdef WITH_ADO
+	METHOD ADO( cServer, cUsername, cPassword, cDatabase, lAutoOpen )			CONSTRUCTOR
+#endif
 	
 	METHOD Version()							INLINE WDO_VERSION
 	
@@ -40,6 +42,8 @@ METHOD Rdbms( cRdbms, cServer, cUsername, cPassword, cDatabase, nPort ) CLASS WD
 
 RETU oDb
 
+#ifdef WITH_ADO
+
 METHOD ADO( cServer, cUsername, cPassword, cDatabase, lAutoOpen ) CLASS WDO
 
 	LOCAL oAdo
@@ -48,4 +52,4 @@ METHOD ADO( cServer, cUsername, cPassword, cDatabase, lAutoOpen ) CLASS WDO
 
 RETU oAdo
 
-
+#endif // WITH_ADO
