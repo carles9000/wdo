@@ -17,7 +17,9 @@
 
 #include "wdo.prg" 					//	WDO
 #include "rdbms.prg" 				//	Base RDBMS
-#include "rdbms_ado.prg" 			//	ADO
+#ifdef WITH_ADO
+	#include "rdbms_ado.prg" 		//	ADO
+#endif
 #include "rdbms_dbf.prg" 			//	Dbf
 #include "rdbms_mysql.prg" 			//	MySql
 //#include "rdbms_pg.prg" 			//	PostgreSql
