@@ -11,7 +11,7 @@ del wdo_lib.hrb
 @echo =================
 
 rem harbour wdo_lib.prg /n /w /gh /dWITH_ADO
-harbour wdo_lib.prg /n /w /gh /dWITH_ADO
+harbour wdo_lib.prg /n /w /gh 
 
 pause
 
