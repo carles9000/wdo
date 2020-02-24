@@ -74,7 +74,7 @@ CLASS RDBMS_Dbf FROM RDBMS
     METHOD Info()							
 	
 	
-	DESTRUCTOR  Exit()					
+//	DESTRUCTOR  Exit()					
 
 ENDCLASS
 
@@ -381,7 +381,7 @@ METHOD Info() CLASS RDBMS_Dbf
 
 RETU NIL
 
-
+/*
 METHOD Exit() CLASS RDBMS_Dbf
 
 	IF  ::lOpen	
@@ -395,6 +395,7 @@ METHOD Exit() CLASS RDBMS_Dbf
 	ENDIF
 	
 RETU NIL
+*/
 
 *-----------------------------------
 STATIC FUNCTION ErrorHandler(oError)
