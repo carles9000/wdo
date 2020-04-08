@@ -17,10 +17,6 @@ FUNCTION Main()
 		
 			? 'Connected !', '<b>Version RDBMS MySql', o:Version()
 			
-		ELSE
-		
-			? o:cError 
-			
 		ENDIF
 
 RETU NIL

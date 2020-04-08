@@ -38,16 +38,8 @@ FUNCTION Main()
 				while ( !empty( a := o:Fetch_Assoc( hRes ) ) )
 					? valtochar( a )
 				end	
-		
-			ELSE
-			
-				? 'Error: ' , o:cError
 			
 			ENDIF
-			
-		ELSE
-
-			? 'Error: ' , o:cError 
 		
 		ENDIF
 		

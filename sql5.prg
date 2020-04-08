@@ -17,7 +17,6 @@ FUNCTION Main()
 		
 		
 		IF ! o:lConnect		
-			? 'Error : ', o:cError
 			RETU NIL
 		ENDIF
 		

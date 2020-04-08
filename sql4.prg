@@ -13,7 +13,7 @@ FUNCTION Main()
 
 	
 		o := WDO():Rdbms( 'MYSQL', "localhost", "harbour", "password", "dbHarbour", 3306 )		
-		
+	
 		
 		IF ! o:lConnect		
 			? 'Error : ', o:cError
@@ -23,7 +23,7 @@ FUNCTION Main()
 		
 		? "<h3>Insert 3 Registers</h3>"		
 		
-		o:Query( "INSERT INTO users (name, age) VALUES ('Maria "   + time() + "', '80')" ) 
+		o:Query( "INSERT INTO users (name, age) VALUES ('Maria "   + time() + "', '80')" ) 						
 		o:Query( "INSERT INTO users (name, age) VALUES ('Josefa "  + time() + "', '84')" ) 
 		o:Query( "INSERT INTO users (name, age) VALUES ('Marilyn " + time() + "', '83')" ) 
 		

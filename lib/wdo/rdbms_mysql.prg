@@ -6,10 +6,9 @@
 	--------------------------------------------------------- */
 #include "hbdyn.ch"
 
-#define VERSION_RDBMS_MYSQL					'0.1a'
+#define VERSION_RDBMS_MYSQL				'0.1c'
 #define HB_VERSION_BITWIDTH  				17
 #define NULL  								0  
-
 
 	
 CLASS RDBMS_MySql FROM RDBMS
@@ -21,6 +20,7 @@ CLASS RDBMS_MySql FROM RDBMS
 	DATA cError 								INIT ''
 	DATA aFields 								INIT {}
 	DATA aLog 									INIT {}
+	DATA bError								INIT {|cError| AP_RPuts( '<br>' + cError ) }
 	
 	METHOD New() 								CONSTRUCTOR
 		
@@ -78,6 +78,11 @@ METHOD New( cServer, cUsername, cPassword, cDatabase, nPort ) CLASS RDBMS_MySql
 
 		If ValType( ::pLib ) <> "P" 
 			::cError := "Error (MySQL library not found)" 
+			
+			IF Valtype( ::bError ) == 'B'
+				Eval( ::bError, ::cError )
+			ENDIF
+			
 			RETU Self
 		ENDIF
 	
@@ -87,6 +92,11 @@ METHOD New( cServer, cUsername, cPassword, cDatabase, nPort ) CLASS RDBMS_MySql
 	
 		IF ::hMySQL = 0 
 			::cError := "hMySQL = " + Str( ::hMySQL ) + " (MySQL library failed to initialize)"
+			
+			IF Valtype( ::bError ) == 'B'
+				Eval( ::bError, ::cError )
+			ENDIF			
+			
 			RETU Self
 		ENDIF
 		
@@ -101,6 +111,11 @@ METHOD New( cServer, cUsername, cPassword, cDatabase, nPort ) CLASS RDBMS_MySql
 		
 		IF  ::hConnection != ::hMySQL
 			::cError := "Connection = (Failed connection) " + ::mysql_error()
+			
+			IF Valtype( ::bError ) == 'B'
+				Eval( ::bError, ::cError )
+			ENDIF			
+			
 			RETU Self
 		ENDIF
 		
@@ -128,6 +143,11 @@ METHOD Query( cQuery ) CLASS RDBMS_MySql
 
 	ELSE
 		::cError := 'Error: ' + ::mysql_error()
+			
+		IF Valtype( ::bError ) == 'B'
+			Eval( ::bError, ::cError )
+		ENDIF
+		
 	ENDIF
    
 RETU hRes

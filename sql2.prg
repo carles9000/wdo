@@ -13,9 +13,9 @@ FUNCTION Main()
 	LOCAL n, j
 	
 		o := WDO():Rdbms( 'MYSQL', "localhost", "harbour", "password", "dbHarbour", 3306 )		
+		o:bError := {|cError| MyError( cError ) }
 		
-		IF ! o:lConnect		
-			? 'Error : ', o:cError
+		IF ! o:lConnect					
 			RETU NIL
 		ENDIF
 		
@@ -52,12 +52,8 @@ FUNCTION Main()
 		
 		? "<hr><b>==> Error  Query( 'select * from ZZZ' )</b>"
 		
-		IF empty( hRes := o:Query( 'select * from ZZZ' ) )
-
-			? '<h3>' + o:cError + '</h3>'
-			
-		ENDIF				
-		
+		o:Query( 'select * from ZZZ' ) 		// ERROR 
+	
 		
 
 		? "<hr><b>==> FetchAll Query( 'select * from users' )</b>"
@@ -84,4 +80,15 @@ FUNCTION Main()
 		ENDIF			
 		
 		
+RETU NIL
+
+
+FUNCTION MyError( cError ) 
+
+	?  '<br>'
+	?? '<div style="background-color:lightgray;border:1px solid gray">'
+	?? '<h3><b>Mi Gestor de Error</h3>'
+	?? '<h4>' + cError + '</h4>'
+	?? '</div>'
+
 RETU NIL

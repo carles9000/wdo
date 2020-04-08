@@ -18,7 +18,6 @@ FUNCTION Main()
 		o := WDO():Rdbms( 'MYSQL', "localhost", "harbour", "password", "dbHarbour", 3306 )		
 		
 		IF ! o:lConnect		
-			? 'Error : ', o:cError
 			RETU NIL
 		ENDIF
 		
