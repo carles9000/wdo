@@ -10,8 +10,8 @@ del wdo_lib.hrb
 @echo Building WDO Lib
 @echo =================
 
-rem harbour wdo_lib.prg /n /w /gh /dWITH_ADO
-harbour wdo_lib.prg /n /w /gh 
+rem harbour wdo_lib.prg /n /w /gh /owdo.hrb /dWITH_ADO
+harbour wdo_lib.prg /n /w /gh /owdo.hrb
 
 pause
 
