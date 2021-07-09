@@ -3,7 +3,7 @@
 //	Description: Test WDO
 //	Date.......: 28/07/2019
 //
-//	{% LoadHRB( '/lib/wdo/wdo_lib.hrb' ) %}					//	Loading WDO lib
+//	{% LoadHRB( '/lib/wdo/wdo.hrb' ) %}					//	Loading WDO lib
 //	{% HB_SetEnv( 'WDO_PATH_MYSQL', "c:/xampp/htdocs/" ) %}	//	Usuarios Xampp
 //	--------------------------------------------------------------
 

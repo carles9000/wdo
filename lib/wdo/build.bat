@@ -1,16 +1,16 @@
 @echo off
 @cls
-@set    path=c:\harbour\bin
-@set include=c:\harbour\include
+@set    path=../../bin/harbour
+@set include=../../bin/harbour/include
 
-del wdo_lib.hrb
+del wdo.hrb
 
 
 @echo =================
 @echo Building WDO Lib
 @echo =================
 
-rem harbour wdo_lib.prg /n /w /gh /owdo.hrb /dWITH_ADO
+rem harbour wdo.prg /n /w /gh /owdo.hrb /dWITH_ADO
 harbour wdo_lib.prg /n /w /gh /owdo.hrb
 
 pause

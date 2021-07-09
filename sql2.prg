@@ -3,7 +3,7 @@
 //	Description: Test WDO
 //	Date.......: 28/07/2019
 //
-//	{% LoadHRB( '/lib/wdo/wdo_lib.hrb' ) %}					//	Loading WDO lib
+//	{% LoadHRB( '/lib/wdo/wdo.hrb' ) %}							//	Loading WDO lib
 //	{% HB_SetEnv( 'WDO_PATH_MYSQL', "c:/xampp/htdocs/" ) %}	//	Usuarios Xampp
 //	--------------------------------------------------------------
 
@@ -20,9 +20,9 @@ FUNCTION Main()
 		ENDIF
 		
 		
-		? "<hr><b>==> Fetch  Query( 'select * from users' )</b>"
+		? "<hr><b>==> Fetch  Query( 'select * from customer where age > 98 and state = 'NY' ') </b>"
 		
-		IF !empty( hRes := o:Query( 'select * from users' ) )
+		IF !empty( hRes := o:Query( "select * from customer where age > 98 and state = 'NY' " ) )
 		
 			WHILE ( !empty( oRs := o:Fetch( hRes ) ) )
 				? valtochar( oRs )
@@ -30,9 +30,9 @@ FUNCTION Main()
 		
 		ENDIF			
 		
-		? "<hr><b>==> Fetch_Assoc  Query( 'select * from users' )</b>"
+		? "<hr><b>==> Fetch_Assoc  Query( 'select * from customer where age > 98 and state = 'NY' ')</b>"
 		
-		IF !empty( hRes := o:Query( 'select * from users' ) )
+		IF !empty( hRes := o:Query( "select * from customer where age > 98 and state = 'NY' "  ) )
 		
 			WHILE ( !empty( oRs := o:Fetch_Assoc( hRes ) ) )
 				? valtochar( oRs )
@@ -52,13 +52,11 @@ FUNCTION Main()
 		
 		? "<hr><b>==> Error  Query( 'select * from ZZZ' )</b>"
 		
-		o:Query( 'select * from ZZZ' ) 		// ERROR 
-	
-		
+		o:Query( 'select * from ZZZ' ) 		// ERROR 			
 
-		? "<hr><b>==> FetchAll Query( 'select * from users' )</b>"
+		? "<hr><b>==> FetchAll Query( 'select * from customer where age > 98 and state = 'NY' ') </b>"
 		
-		IF !empty( hRes := o:Query( 'select * from users' ) )
+		IF !empty( hRes := o:Query( "select * from customer where age > 98 and state = 'NY' "  ) )
 		
 			aData := o:FetchAll( hRes )
 			

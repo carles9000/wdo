@@ -3,7 +3,7 @@
 //	Description: Test WDO
 //	Date.......: 28/07/2019
 //
-//	{% LoadHRB( '/lib/wdo/wdo_lib.hrb' ) %}					//	Loading WDO lib
+//	{% LoadHRB( '/lib/wdo/wdo.hrb' ) %}							//	Loading WDO lib
 //	{% HB_SetEnv( 'WDO_PATH_MYSQL', "c:/xampp/htdocs/" ) %}	//	Usuarios Xampp
 //	--------------------------------------------------------------
 
@@ -18,7 +18,7 @@ FUNCTION Main()
 		
 			?? 'Version WDO', o:ClassName(), o:Version()
 			
-			IF !empty( hRes := o:Query( 'select * from users' ) )
+			IF !empty( hRes := o:Query( "select * from customer where age > 98 and state = 'NY' " ) )
 
 				? 'Count(): ', o:Count( hRes )
 				? 'Fields: ',  o:FCount( hRes )

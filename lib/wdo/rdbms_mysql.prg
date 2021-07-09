@@ -1,10 +1,15 @@
 /*	---------------------------------------------------------
 	File.......: rdbms_mysql.prg
-	Description: ConexiÃ³n a Bases de Datos MySql 
+	Description: Conexión a Bases de Datos MySql 
 	Author.....: Carles Aubia Floresvi
 	Date:......: 26/07/2019
 	--------------------------------------------------------- */
 #include "hbdyn.ch"
+
+   #xcommand TRY  => BEGIN SEQUENCE WITH {| oErr | Break( oErr ) }
+   #xcommand CATCH [<!oErr!>] => RECOVER [USING <oErr>] <-oErr->
+   #xcommand FINALLY => ALWAYS
+   #xtranslate Throw( <oErr> ) => ( Eval( ErrorBlock(), <oErr> ), Break( <oErr> )
 
 #define VERSION_RDBMS_MYSQL				'0.1c'
 #define HB_VERSION_BITWIDTH  				17
@@ -16,15 +21,20 @@ CLASS RDBMS_MySql FROM RDBMS
 	DATA pLib
 	DATA hMySql
 	DATA hConnection
+	
 	DATA lConnect								INIT .F.
+	DATA nAffected_Rows						INIT 0
 	DATA cError 								INIT ''
 	DATA aFields 								INIT {}
 	DATA aLog 									INIT {}
-	DATA bError								INIT {|cError| AP_RPuts( '<br>' + cError ) }
+	DATA bError									INIT {|cError| AP_RPuts( '<br>' + cError ) }
 	
 	METHOD New() 								CONSTRUCTOR
 		
 	METHOD Query( cSql )	
+	METHOD Row_Count()	
+	METHOD Last_Insert_Id()	
+	
 	METHOD Count( hRes )						INLINE ::mysql_num_rows( hRes )
 	METHOD FCount( hRes )						INLINE ::mysql_num_fields( hRes )
 	METHOD LoadStruct()					
@@ -32,12 +42,13 @@ CLASS RDBMS_MySql FROM RDBMS
 	METHOD Fetch( hRes )	
 	METHOD Fetch_Assoc( hRes )		
 	METHOD FetchAll( hRes, lAssociative )
-	METHOD Free_Result( hRes )					INLINE ::mysql_free_result( hRes )	
+	METHOD Free_Result( hRes )				INLINE ::mysql_free_result( hRes )	
 	
 	
 	//	Wrappers (Antonio Linares)
 	
 	METHOD mysql_init()
+	METHOD mysql_Close()
 	METHOD mysql_get_server_info()
 	METHOD mysql_real_connect( cServer, cUserName, cPassword, cDataBaseName, nPort )
 	METHOD mysql_error()
@@ -47,7 +58,9 @@ CLASS RDBMS_MySql FROM RDBMS
 	METHOD mysql_num_fields( hRes ) 
 	METHOD mysql_fetch_field( hRes )
 	METHOD mysql_fetch_row( hRes )
-	METHOD mysql_free_result( hRes )	
+	METHOD mysql_free_result( hRes )
+	METHOD mysql_real_escape_string_quote( cQuery )	
+
 	
 	METHOD Version()							INLINE VERSION_RDBMS_MYSQL
 
@@ -132,23 +145,36 @@ METHOD Query( cQuery ) CLASS RDBMS_MySql
 
 	LOCAL nRetVal
 	LOCAL hRes			:= 0
+	local cSql 		:= ''
+	
 
     IF ::hConnection == 0
 		RETU NIL
 	ENDIF	
-	
+
+	cSql := StrTran( cQuery, "'", "\'" )  
+
+
     nRetVal := ::mysql_query( cQuery )
+	
 
 	IF nRetVal == 0 
+
+		
 		hRes = ::mysql_store_result()
 
+
 		IF hRes != 0					//	Si Update/Delete hRes == 0
+
 			::LoadStruct( hRes )
 		ENDIF
 
+		//::Row_Count()			
+
 	ELSE
+
 		::cError := 'Error: ' + ::mysql_error()
-			
+
 		IF Valtype( ::bError ) == 'B'
 			Eval( ::bError, ::cError )
 		ENDIF
@@ -156,6 +182,40 @@ METHOD Query( cQuery ) CLASS RDBMS_MySql
 	ENDIF
    
 RETU hRes
+
+
+METHOD Last_Insert_Id() CLASS RDBMS_MySql 
+
+	local nId := -1
+	local hRes, hRs 
+	
+	if !empty( hRes := ::Query( "SELECT LAST_INSERT_ID() as last_id"  ) )
+	
+		hRs := ::Fetch_Assoc( hRes )
+	
+		nId := Val( hRs['last_id'] )
+	
+	endif 
+
+RETU nId 
+
+//	Return affected rows. Executed after query
+
+METHOD Row_Count() CLASS RDBMS_MySql 
+
+	local hRes, hRs 
+	
+	::nAffected_Rows := 0
+	
+	if !empty( hRes := ::Query( "SELECT ROW_COUNT() as total"  ) )	
+	
+		hRs 	:= ::Fetch_Assoc( hRes )
+	
+		::nAffected_Rows	:= Val( hRs['total'] )
+	
+	endif 
+
+RETU ::nAffected_Rows
 
 METHOD LoadStruct( hRes ) CLASS RDBMS_MySql
 
@@ -273,8 +333,13 @@ return hb_DynCall( { "mysql_num_rows", ::pLib, hb_bitOr( hb_SysLong(),;
 
 METHOD mysql_Init() CLASS RDBMS_MySql
 
-RETU hb_DynCall( { "mysql_init", ::pLib, hb_bitOr( hb_SysLong(),;
-                   hb_SysCallConv() ) }, NULL )
+RETU hb_DynCall( { "mysql_init", ::pLib, hb_bitOr( hb_SysLong(), hb_SysCallConv() ) }, NULL )
+
+
+
+METHOD mysql_Close() CLASS RDBMS_MySql
+
+RETU hb_DynCall( { "mysql_close", ::pLib, hb_bitOr( hb_SysLong(), hb_SysCallConv() ) }, NULL )
 				   
 METHOD mysql_get_server_info() CLASS RDBMS_MySql	
 
@@ -306,10 +371,42 @@ RETU hb_DynCall( { "mysql_error", ::pLib, hb_bitOr( HB_DYN_CTYPE_CHAR_PTR,;
 
 METHOD mysql_query( cQuery ) CLASS RDBMS_MySql	
 
-RETU hb_DynCall( { "mysql_query", ::pLib, hb_bitOr( HB_DYN_CTYPE_INT,;
-                   hb_SysCallConv() ), hb_SysLong(), HB_DYN_CTYPE_CHAR_PTR },;
-                   ::hConnection, cQuery )				   
+	local u
+	
+	local bNewError := {|oError| ErrorHandler(oError,.T.) }
+    local bOldError := Errorblock(bNewError)
+
+	BEGIN SEQUENCE
+		u := hb_DynCall( { "mysql_query", ::pLib, hb_bitOr( HB_DYN_CTYPE_INT,;
+						   hb_SysCallConv() ), hb_SysLong(), HB_DYN_CTYPE_CHAR_PTR },;
+						   ::hConnection, cQuery )
+   
+    RECOVER
+      ap_rputs( "Error" )
+      return nil
+    END SEQUENCE
+	
+	Errorblock(bOldError)
 				   
+RETU u 
+
+METHOD mysql_real_escape_string_quote( cQuery ) CLASS RDBMS_MySql	
+
+	cQuery := StrTran( cQuery, "'", "\'" )
+
+retu cQuery
+
+/*
+RETU hb_DynCall( { "mysql_real_escape_string", hb_bitOr( HB_DYN_CTYPE_INT,;
+                   hb_SysCallConv() ), hb_SysLong(), HB_DYN_CTYPE_CHAR_PTR, HB_DYN_CTYPE_CHAR_PTR, HB_DYN_CTYPE_LONG, HB_DYN_CTYPE_CHAR_PTR },;
+				   ::hConnection, @cQuery, cQuery, Len(cQuery), "\'")	
+*/
+
+/*
+RETU hb_DynCall( { "mysql_real_escape_string", ::pLib, hb_bitOr( hb_SysLong(),;
+hb_SysCallConv() ), hb_SysLong(), HB_DYN_CTYPE_CHAR_PTR, HB_DYN_CTYPE_CHAR_PTR, HB_DYN_CTYPE_LONG, HB_DYN_CTYPE_CHAR_PTR },;
+::hConnection, @cQuery, cQuery,  Len(cQuery), "\'")				   
+*/				   
 
 
 METHOD mysql_store_result() CLASS RDBMS_MySql	
@@ -343,13 +440,21 @@ METHOD mysql_free_result( hRes ) CLASS RDBMS_MySql
 
 RETU hb_DynCall( { "mysql_free_result", ::pLib,;
                    hb_SysCallConv(), hb_SysLong() }, hRes )
+				   
+				   
+
+
 
 				   
 				   
 METHOD Exit() CLASS RDBMS_MySql
 
     IF ValType( ::pLib ) == "P"
+	
 		//? "MySQL library properly freed: ", HB_LibFree( ::pLib )
+		::MySql_Close()
+		
+		HB_LibFree( ::pLib )
     ENDIF 
 	
 RETU NIL
