@@ -75,7 +75,11 @@ FUNCTION Main()
 			
 			o:View( aSt, aData )
 		
-		ENDIF			
+		ENDIF	
+
+		//o:Close()
+		
+		//HB_LibFree( o
 		
 		
 RETU NIL

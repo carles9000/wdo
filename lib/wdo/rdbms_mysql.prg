@@ -45,6 +45,7 @@ CLASS RDBMS_MySql FROM RDBMS
 	METHOD Free_Result( hRes )				INLINE ::mysql_free_result( hRes )	
 	
 	
+	
 	//	Wrappers (Antonio Linares)
 	
 	METHOD mysql_init()
@@ -339,7 +340,8 @@ RETU hb_DynCall( { "mysql_init", ::pLib, hb_bitOr( hb_SysLong(), hb_SysCallConv(
 
 METHOD mysql_Close() CLASS RDBMS_MySql
 
-RETU hb_DynCall( { "mysql_close", ::pLib, hb_bitOr( hb_SysLong(), hb_SysCallConv() ) }, NULL )
+RETU hb_DynCall( { "mysql_close", ::pLib, hb_SysCallConv(), hb_SysLong() }, ::hMySQL )
+
 				   
 METHOD mysql_get_server_info() CLASS RDBMS_MySql	
 
@@ -452,9 +454,13 @@ METHOD Exit() CLASS RDBMS_MySql
     IF ValType( ::pLib ) == "P"
 	
 		//? "MySQL library properly freed: ", HB_LibFree( ::pLib )
+		
+		? 'Exit MEthod ', ::pLib, ::hMySql
 		::MySql_Close()
 		
 		HB_LibFree( ::pLib )
+		
+		? 'Exit MEthod 2', ::pLib, ::hMySql
     ENDIF 
 	
 RETU NIL
