@@ -19,6 +19,8 @@ FUNCTION Main()
 			RETU NIL
 		ENDIF
 		
+		? "MySQL version: " + o:mysql_get_server_info() 
+		
 		
 		? "<hr><b>==> Fetch  Query( 'select * from customer where age > 98 and state = 'NY' ') </b>"
 		
