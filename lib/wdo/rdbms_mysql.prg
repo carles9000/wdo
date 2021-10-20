@@ -659,10 +659,7 @@ RETU hb_DynCall( { "mysql_free_result", ::pLib,;
 METHOD Exit() CLASS RDBMS_MySql
 
     IF ValType( ::pLib ) == "P"
-	
-		//? "MySQL library properly freed: ", HB_LibFree( ::pLib )
 		
-		//? 'Exit Method ', ::pLib, ::hMySql
 		::MySql_Close()
 		
 		HB_LibFree( ::pLib )
@@ -670,7 +667,7 @@ METHOD Exit() CLASS RDBMS_MySql
 		::pLib := NIL
 		::hMySql := NIL
 		
-		//? 'Exit Method 2', ::pLib, ::hMySql
+		
     ENDIF 
 	
 RETU NIL

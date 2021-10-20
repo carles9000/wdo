@@ -4,7 +4,7 @@
 //	Date.......: 28/07/2019
 //
 //	{% AAdd( getList, hb_milliseconds()  ) %}	//	Ocupará el 1 elemento del array
-//	{% LoadHRB( '/lib/wdo/wdo_lib.hrb' ) %}	//	Loading WDO lib
+//	{% LoadHRB( '/lib/wdo/wdo.hrb' ) %}	//	Loading WDO lib
 //	------------------------------------------------------------------------------
 
 //	Test Speed...

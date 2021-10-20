@@ -3,7 +3,7 @@
 //	Description: Test WDO - ADO
 //	Date.......: 17/09/2019
 //
-//	{% LoadHRB( '/lib/wdo/wdo_lib.hrb' ) %}		//	Loading WDO lib
+//	{% LoadHRB( '/lib/wdo/wdo.hrb' ) %}		//	Loading WDO lib
 //	--------------------------------------------------------------
 
 FUNCTION Main()

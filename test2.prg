@@ -26,7 +26,8 @@ FUNCTION Main()
 
    ? "Getting data..."
    a =  hb_MilliSeconds()
-   hRes := o:Query( "select * from db where KAR_FECHA >= '2004-01-01' and KAR_FECHA <= '2004-12-31'" )
+   //hRes := o:Query( "select * from db where KAR_FECHA >= '2004-01-01' and KAR_FECHA <= '2004-12-31'" )
+   hRes := o:Query( "select * from db where KAR_FECHA between '2004-01-01' and '2004-12-31'" )
    
    
   aData := o:FetchAll( hRes )
@@ -36,5 +37,41 @@ FUNCTION Main()
    ? "Total time:", hb_MilliSeconds() - a, "ms"
    ? "Result: ", Len( aData )
    ? "Result: ", o:Count( hRes )
+   
+   ? '<hr>'
+   ? "Getting data..."
+   
+	a =  hb_MilliSeconds()  
+   
+   // hRes := o:Query( "select count(*) from db where KAR_FECHA between '2004-01-01' and '2004-12-31'" )
+    //hRes := o:Query( "select * from db where KAR_FECHA between '2004-01-01' and '2004-12-31'" )
+    hRes := o:Query( "select * from db where KAR_FECHA >= '2004-01-01' and KAR_FECHA <= '2004-12-31'" )
+	? 'Lap Query ', hb_MilliSeconds() - a, "ms"
+	retu
+   
+	
+	f := o:nFields
+	aData := {}
+	
+	
+	hRow := o:mysql_fetch_row( hRes ) 
+	
+	
+	while ( hRow := o:mysql_fetch_row( hRes ) ) != 0
+	
+		aReg := array( f )
+		
+		for m = 1 to f
+			aReg[ m ] := PtrToStr( hRow, m - 1 ) 
+		next		
+		
+		Aadd( aData, aReg )
+	end 
+	
+	
+    ? "Total time:", hb_MilliSeconds() - a, "ms"
+    ? "Result: ", Len( aData )
+    ? "Result: ", o:Count( hRes )  
+   
 
 RETURN NIL
