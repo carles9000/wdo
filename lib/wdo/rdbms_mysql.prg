@@ -22,6 +22,7 @@ CLASS RDBMS_MySql FROM RDBMS
 	DATA hMySql
 	DATA hConnection
 	
+	
 	DATA lConnect								INIT .F.
 	DATA lLog									INIT .F.
 	DATA lWeb									INIT .T.
@@ -112,7 +113,7 @@ METHOD New( cServer, cUsername, cPassword, cDatabase, nPort, cType, lLog, bError
 	
 	if( ::lLog, ::d( 'WDO log activated' ), nil )	
 	
-	lAjax := lower( AP_GetEnv('HTTP_X_REQUESTED_WITH') ) == 'xmlhttprequest'
+	lAjax := lower( AP_GetEnv('HTTP_X_REQUESTED_WITH') ) == 'xmlhttprequest'	
 	
 	if( ::lLog, ::d( if(lAjax, 'AJAX Yes', 'AJAX No' ) ), nil )		
 	
@@ -281,7 +282,7 @@ METHOD Query( cQuery ) CLASS RDBMS_MySql
 		RETU NIL
 	ENDIF	
 
-	//cSql := StrTran( cQuery, "'", "\'" )  
+	
 
 	if ( ::lLog	, ::d( cQuery ), nil )	
 	
@@ -430,12 +431,7 @@ METHOD Fetch( hRes, aNoEscape ) CLASS RDBMS_MySql
 			else 
 			
 				for m = 1 to ::nFields
-				
-					if Ascan( aNoEscape, ::aFields[m][1] ) > 0
-						aReg[ m ] := PtrToStr( hRow, m - 1 ) 
-					else
-						aReg[ m ] := PtrToStr( hRow, m - 1 )
-					endif
+					aReg[ m ] := PtrToStr( hRow, m - 1 )					
 				next						
 			
 			endif 
@@ -444,9 +440,6 @@ METHOD Fetch( hRes, aNoEscape ) CLASS RDBMS_MySql
 		
 	endif
 
-	//if hRes > 0			//	Casca al liberar la memoria !!!!!  IMPORTANT
-	//	::mysql_free_result( hRes )		
-	//endif
 
 RETU aReg
 
@@ -479,24 +472,34 @@ METHOD Fetch_Assoc( hRes, aNoEscape ) CLASS RDBMS_MySql
 
 		else 
 			
-			for m = 1 to ::nFields
+			if ::lWeb 
 			
-				if Ascan( aNoEscape, ::aFields[m][1]  ) > 0		
-					hReg[ ::aFields[m][1] ] :=  PtrToStr( hRow, m - 1 ) 
-				else
-					hReg[ ::aFields[m][1] ] :=  hb_HtmlEncode( PtrToStr( hRow, m - 1 ) )
-				endif
+				for m = 1 to ::nFields
+				
+					if Ascan( aNoEscape, ::aFields[m][1]  ) > 0		
+						hReg[ ::aFields[m][1] ] :=  PtrToStr( hRow, m - 1 ) 
+					else
+						hReg[ ::aFields[m][1] ] :=  hb_HtmlEncode( PtrToStr( hRow, m - 1 ) )
+					endif
+				
+				next
 			
-			next
+			else 
+			
+				for m = 1 to ::nFields
+				
+					if Ascan( aNoEscape, ::aFields[m][1]  ) > 0		
+						hReg[ ::aFields[m][1] ] :=  PtrToStr( hRow, m - 1 ) 
+					endif
+				
+				next			
+			
+			endif
 			
 		endif
 			
 		
 	endif
-	
-	//if hRes > 0	//	Casca al liberar la memoria !!!!!  IMPORTANT
-	//	::mysql_free_result( hRes )		
-	//endif
 
 RETU hReg
 
@@ -529,7 +532,10 @@ METHOD FetchAll( hRes, lAssociative, aNoEscape ) CLASS RDBMS_MySql
 		
 	ENDIF
 
-	
+
+	if hRes > 0					
+		::mysql_free_result( hRes )					
+	endif	
 	
 RETU aData
 
@@ -658,15 +664,14 @@ RETU hb_DynCall( { "mysql_free_result", ::pLib,;
 
 METHOD Exit() CLASS RDBMS_MySql
 
-    IF ValType( ::pLib ) == "P"
-		
+    IF ValType( ::pLib ) == "P"		
+
 		::MySql_Close()
 		
 		HB_LibFree( ::pLib )
 		
 		::pLib := NIL
-		::hMySql := NIL
-		
+		::hMySql := NIL		
 		
     ENDIF 
 	
